@@ -50,11 +50,24 @@ class ArgHandle():
             help='time intervavl for msg send to router',
         )
         parser.add_argument(
+            '--t2',
+            dest='t2',
+            action='store',
+            default=10,
+            type=int,
+            help='time intervavl for msg send to each device',
+        )
+        parser.add_argument(
             '-u', '--device-uuid',
             dest='device_uuid',
             action='store',
-            default='000e83c6c10000000000c85b765caf43',
             help='Specify device uuid',
+        )
+        parser.add_argument(
+            '-f',
+            dest='uuids_file',
+            action='store',
+            help='Specify device uuids',
         )
         parser.add_argument(
             '-c', '--send package number',
@@ -92,7 +105,21 @@ class ArgHandle():
         return getattr(self.args, attrname)
 
     def check_args(self):
-        pass
+        if arg_handle.get_args('device_uuid') or arg_handle.get_args('uuids_file'):
+            global uuids
+            uuids = []
+            if arg_handle.get_args('device_uuid'):
+                uuids.append(arg_handle.get_args('device_uuid'))
+            else:
+                with open(arg_handle.get_args('uuids_file')) as f:
+                    for line in f:
+                        if line.strip():
+                            uuids.append(line.strip())
+            for uuid in uuids:
+                LOG.info('uuid: %s is given.' % uuid)
+        else:
+            cprint.error_p("-f or -u should be give!")
+            sys.exit()
 
     def run(self):
         self.args = self.parser.parse_args()
@@ -180,7 +207,7 @@ def login_router(phone, password):
     return str(json.dumps(msg)) + '\n'
 
 
-def app_msg(req_id, uuid):
+def temperature_set_msg(req_id, uuid, *args):
     temperature = random.randint(17, 30)
     msg_temp_up = {
         "uuid": "111",
@@ -374,71 +401,84 @@ if __name__ == '__main__':
             arg_handle.get_args('router_password')))
         LOG.info("To login router: " + msg.strip())
         app.queue_out.put(msg)
-        login_flag = True
         time.sleep(1)
 
         if arg_handle.get_args('device_type') == 'air':
             for i in range(arg_handle.get_args('number_to_send')):
+                j = 100000
                 req_id = i + 88000000
-                msg = app_msg(
-                    req_id, arg_handle.get_args('device_uuid'))
-                app.msgst[req_id]['send_time'] = datetime.datetime.now()
-                app.queue_out.put(msg)
-                LOG.info("send: " + msg.strip())
-                time.sleep(arg_handle.get_args('time_interval') / 1000.0)
+                for uuid in uuids:
+                    req_id += j
+                    j += 1
+                    msg = temperature_set_msg(req_id, uuid)
+                    app.msgst[req_id]['send_time'] = datetime.datetime.now()
+                    app.queue_out.put(msg)
+                    LOG.info("send: " + msg.strip())
+                    time.sleep(arg_handle.get_args('t2') / 1000.0)
 
-            while not app.queue_out.empty():
-                time.sleep(1)
+                time.sleep(arg_handle.get_args('time_interval') / 1000.0)
 
         elif arg_handle.get_args('device_type') == 'led':
             for i in range(arg_handle.get_args('number_to_send')):
-                req_id = i + 66000000
-                msg = led_control_msg(
-                    req_id, arg_handle.get_args('device_uuid'), 'on')
-                app.queue_out.put(msg)
-                app.msgst[req_id]['send_time'] = datetime.datetime.now()
-                app.queue_out.put(msg)
-                LOG.info("send: " + msg.strip())
+                j = 100000
+                req_id = i + 88000000
+                for uuid in uuids:
+                    req_id += j
+                    j += 1
+                    msg = led_control_msg(req_id, uuid, 'on')
+                    app.queue_out.put(msg)
+                    app.msgst[req_id]['send_time'] = datetime.datetime.now()
+                    app.queue_out.put(msg)
+                    LOG.info("send: " + msg.strip())
+                    time.sleep(arg_handle.get_args('t2') / 1000.0)
                 time.sleep(arg_handle.get_args('time_interval') / 1000.0)
 
-                req_id = i + 77000000
-                msg = led_control_msg(
-                    req_id, arg_handle.get_args('device_uuid'), 'off')
-                app.queue_out.put(msg)
-                app.msgst[req_id]['send_time'] = datetime.datetime.now()
-                app.queue_out.put(msg)
-                LOG.info("send: " + msg.strip())
+                j = 100000
+                req_id = i + 99000000
+                for uuid in uuids:
+                    req_id += j
+                    j += 1
+                    msg = led_control_msg(req_id, uuid, 'off')
+                    app.queue_out.put(msg)
+                    app.msgst[req_id]['send_time'] = datetime.datetime.now()
+                    app.queue_out.put(msg)
+                    LOG.info("send: " + msg.strip())
+                    time.sleep(arg_handle.get_args('t2') / 1000.0)
                 time.sleep(arg_handle.get_args('time_interval') / 1000.0)
-
-            while not app.queue_out.empty():
-                time.sleep(1)
 
         elif arg_handle.get_args('device_type') == 'switch':
             for i in range(arg_handle.get_args('number_to_send')):
+                j = 100000
                 req_id = i + 88000000
-                msg = switch_control_msg(
-                    req_id, arg_handle.get_args('device_uuid'), 'on')
-                app.queue_out.put(msg)
-                app.msgst[req_id]['send_time'] = datetime.datetime.now()
-                app.queue_out.put(msg)
-                LOG.info("send: " + msg.strip())
+                for uuid in uuids:
+                    req_id += j
+                    j += 1
+                    msg = switch_control_msg(req_id, uuid, 'on')
+                    app.queue_out.put(msg)
+                    app.msgst[req_id]['send_time'] = datetime.datetime.now()
+                    app.queue_out.put(msg)
+                    LOG.info("send: " + msg.strip())
+                    time.sleep(arg_handle.get_args('t2') / 1000.0)
                 time.sleep(arg_handle.get_args('time_interval') / 1000.0)
 
+                j = 100000
                 req_id = i + 99000000
-                msg = switch_control_msg(
-                    req_id, arg_handle.get_args('device_uuid'), 'off')
-                app.queue_out.put(msg)
-                app.msgst[req_id]['send_time'] = datetime.datetime.now()
-                app.queue_out.put(msg)
-                LOG.info("send: " + msg.strip())
+                for uuid in uuids:
+                    req_id += j
+                    j += 1
+                    msg = switch_control_msg(req_id, uuid, 'off')
+                    app.queue_out.put(msg)
+                    app.msgst[req_id]['send_time'] = datetime.datetime.now()
+                    app.queue_out.put(msg)
+                    LOG.info("send: " + msg.strip())
+                    time.sleep(arg_handle.get_args('t2') / 1000.0)
                 time.sleep(arg_handle.get_args('time_interval') / 1000.0)
-
-            while not app.queue_out.empty():
-                time.sleep(1)
 
         else:
             LOG.error('Not support device!')
 
+        while not app.queue_out.empty():
+            time.sleep(1)
         time.sleep(5)
 
         pkg_lost = 0

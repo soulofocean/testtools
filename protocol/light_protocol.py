@@ -128,7 +128,7 @@ class SDK(communication_base):
         coding = sys.getfilesystemencoding()
         ack = False
         if msg[0:4] == b'\x48\x44\x58\x4d':
-            if msg[4:4 + 20] == b'\x30' * 20 and (msg[4 + 20:4 + 20 + 20] == self.device_id or msg[4 + 20:4 + 20 + 20] == self.device_id.encode('utf-8')):
+            if msg[4 + 20:4 + 20 + 20] == self.device_id or msg[4 + 20:4 + 20 + 20] == self.device_id.encode('utf-8'):
                 if msg[44:45] != b'\x00':
                     self.LOG.info("Get ack!")
                     ack = True

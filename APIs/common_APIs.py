@@ -173,7 +173,7 @@ def crc(s):
 
 
 # create CRC16
-def crc16(data):
+def crc16(data, reverse=False):
     if isinstance(data, type(b'')):
         pass
     else:
@@ -182,7 +182,10 @@ def crc16(data):
     s = unhexlify(a)
     crc16 = crcmod.predefined.Crc('crc-ccitt-false')
     crc16.update(s)
-    return struct.pack('>H', crc16.crcValue)
+    if reverse == False:
+        return struct.pack('>H', crc16.crcValue)
+    else:
+        return struct.pack('<H', crc16.crcValue)
 
 
 def get_md5(strtext):

@@ -3,15 +3,16 @@
 import datetime
 import random
 
+# 设备初始化参数
 Attribute_initialization = {
     "_type": 2016,
     "_subDeviceType": 88,
-    "_deviceID": "12345678901234567890",
-    "_subDeviceID": "1001201600FF81992F49",
+    "_deviceID": "1005200958FCDBDA5380",
+    "_subDeviceID": "301058FCDBDA53800001",
     "_name": 'dog door',
     "_manufacturer": 'HDIOT',
     "_ip": "192.168.0.235",
-    "_mac": '00:FF:81:99:2F:49',
+    "_mac": '58:FC:DB:DA:53:80',
     "_mask": '255.255.255.0',
     "_version": '1.0.01',
     "_time": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S').encode('utf-8'),
@@ -25,7 +26,7 @@ Attribute_initialization = {
     "_endTime": '2888-08-08',
     "_UserType": '',
     "_userID": '',
-    "_CredenceType": '',
+    "_CredenceType": 2,
     "_credenceNo": '12345678',
     "_State": 0,
 
@@ -43,55 +44,18 @@ Attribute_initialization = {
         "interval": 1000,
         "msgs": {
             "COM_UPLOAD_DEV_STATUS": 0,
-            "COM_UPLOAD_RECORD.Data[0].RecordType.REMOTE_OPEN_DOOR_RECORD": 0,
-            "COM_UPLOAD_RECORD.Data[0].RecordType.BUTTON_OPEN_DOOR_RECORD": 0,
-            "COM_UPLOAD_EVENT.Data[0].EventType.NFC_EVENT": 10,
+            "COM_UPLOAD_RECORD.Data[0].RecordType.30001": 0,
+            "COM_UPLOAD_EVENT.Data[0].EventType.NFC_EVENT": 0,
         }
     }
 }
 
 
-defined_event = [
-    "TAMPER_ALARM",
-    "LOW_VOLTAGE_ALARM",
-    "ABNORMAL_OPEN_DOOR_ALARM",
-    "OPEN_DOOR_TIMEOUT_ALARM",
-    "IMPACT_BALUSTRADE",
-    "GPS_EVENT",
-    "NFC_EVENT",
-]
-
-defined_record = [
-    "FACE_OPEN_DOOR_RECORD",
-    "REMOTE_OPEN_DOOR_RECORD",
-    "BURSH_CARD_OPEN_DOOR_RECORD",
-    "QR_CODE_OPEN_DOOR_RECORD",
-    "FINGER_OPEN_DOOR_RECORD",
-    "PASSWORD_OPEN_DOOR_RECORD",
-    "BUTTON_OPEN_DOOR_RECORD",
-    "BLACKLIST_OPEN_DOOR_RECORD",
-    "FACE_OPEN_DOOR_FAIL_RECORD",
-    "REMOTE_OPEN_DOOR_FAIL_RECORD",
-    "CPU_CARD_OPEN_DOOR_FAIL_RECORD",
-    "QR_CODE_OPEN_DOOR_FAIL_RECORD",
-    "FINGER_OPEN_DOOR_FAIL_RECORD",
-    "PASSWORD_OPEN_DOOR_FAIL_RECORD",
-    "BURSH_CARD_OPEN_PARK_RECORD",
-    "CARNO_OPEN_PARK_RECORD",
-    "REMOTE_OPEN_PARK_RECORD",
-    "MANUAL_OPEN_PARK_RECORD",
-    # AlarmType
-    "TAMPER_ALARM",
-    "OPEN_DOOR_TIMEOUT_ALARM",
-    "OPEN_DOOR_ABNORMAL_ALARM",
-    "DANGLE_AFTER_ALARM",
-    "DEVICE_FAILURE_ALARM",
-    "FACE_FAILURE_ALARM",
-    "CARD_FAILURE_ALARM",
-    "QRCode_FAILURE_ALARM"
-]
 
 
+
+
+# 注册设备支持的消息
 Command_list = {
     "COM_HEARTBEAT": {"msg": "心跳"},
     "COM_UPLOAD_DEV_STATUS": {"msg": "设备状态上报"},
@@ -117,6 +81,7 @@ Command_list = {
 }
 
 
+# 定制设备需要主动发的消息
 u'''心跳'''
 COM_HEARTBEAT = {
     "send_msg": {
@@ -144,6 +109,7 @@ u'''事件上报：记录上传'''
 COM_UPLOAD_RECORD = {
     "send_msg": {
         "Command": 'COM_UPLOAD_RECORD',
+        "EventCode": "will_be_replace",
         "Data": [
                 {
                     "deviceID": "##self._deviceID##",
@@ -188,10 +154,10 @@ COM_DEV_REGISTER = {
 }
 
 
+# 定制设备需要应答的消息
 u'''功能命令：设备目录查询'''
 COM_QUERY_DIR = {
-    # 'set_item':{'_time':'Data.time'},
-    # "action":{"reconnection":5},
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_QUERY_DIR",
         "Result": 0,
@@ -210,7 +176,7 @@ COM_QUERY_DIR = {
 
 u'''功能命令：恢复出厂设置'''
 COM_DEV_RESET = {
-    "action": {"reconnection": [5]},
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_DEV_RESET",
         "Result": 0,
@@ -219,6 +185,7 @@ COM_DEV_RESET = {
 
 u'''功能命令：读取时间'''
 COM_READ_TIME = {
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_READ_TIME",
         "Result": 0,
@@ -243,6 +210,7 @@ COM_SET_TIME = {
 
 u'''功能命令：立即校时'''
 COM_CORRECTION = {
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_CORRECTION",
         "Result": 0,
@@ -253,6 +221,7 @@ COM_CORRECTION = {
 
 u'''功能命令：读取系统版本信息'''
 COM_READ_SYSTEM_VERSION = {
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_READ_SYSTEM_VERSION",
         "Result": 0,
@@ -284,6 +253,7 @@ COM_NOTIFY_UPDATE = {
 
 u'''功能命令：读取参数'''
 COM_READ_PARAMETER = {
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_READ_PARAMETER",
         "Result": 0,
@@ -323,6 +293,7 @@ COM_LOAD_CERTIFICATE = {
 
 u'''功能命令：读取固定凭证信息'''
 COM_READ_CERTIFICATE = {
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_READ_CERTIFICATE",
         "Result": 0,
@@ -340,6 +311,7 @@ COM_READ_CERTIFICATE = {
 
 u'''功能命令：删除固定凭证信息'''
 COM_DELETE_CERTIFICATE = {
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_DELETE_CERTIFICATE",
         "Result": 0,
@@ -348,6 +320,7 @@ COM_DELETE_CERTIFICATE = {
 
 u'''功能命令：批量下发固定凭证信息'''
 COM_LOAD_CERTIFICATE_IN_BATCH = {
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_LOAD_CERTIFICATE_IN_BATCH",
         "Result": 0,
@@ -365,6 +338,7 @@ COM_GATE_CONTROL = {
 
 u'''功能命令：设备状态查询'''
 COM_QUERY_DEV_STATUS = {
+    'set_item':{},
     "rsp_msg": {
         "Command": "COM_QUERY_DEV_STATUS",
         "Result": 0,

@@ -32,7 +32,7 @@ from APIs.common_APIs import (my_system, my_system_full_output,
 from basic.cprint import cprint
 from basic.log_tool import MyLogger
 from basic.task import Task
-from protocol.devices import Door
+from protocol.light_devices import Door
 
 if sys.getdefaultencoding() != 'utf-8':
     reload(sys)
@@ -112,13 +112,15 @@ class ArgHandle():
             ip_prefix = '.'.join(arg_handle.get_args(
                 'self_IP').split('.')[0:-1])
             ip_start = arg_handle.get_args('self_IP').split('.')[-1]
-            ipv4s = [ip for ip in ipv4s if re.search(r'%s' % (ip_prefix), ip) and arg_handle.get_args(
-                'self_IP').split('.')[-1] >= ip_start]
+            cprint.notice_p("Start ip: %s" % (ip_start))
+            ipv4s = [ip for ip in ipv4s if re.search(r'%s' % (ip_prefix), ip) and int(ip.split('.')[-1]) >= int(ip_start)]
             if len(ipv4s) < arg_handle.get_args('device_count'):
                 cprint.error_p("Local ips: %d not enough" % (len(ipv4s)))
                 sys.exit()
             else:
                 ipv4_list = ipv4s
+                for ip in ipv4_list:
+                    cprint.notice_p("Use Local ip: %s" % (ip))
         else:
             ip = ''
             if arg_handle.get_args('self_IP'):
@@ -167,29 +169,20 @@ class MyCmd(Cmd):
 
     def help_record(self):
         cprint.notice_p("send record:")
-        for item in sorted(self.sim_objs[0].get_record_list()):
-            cprint.yinfo_p("%s" % item)
 
     def do_record(self, arg, opts=None):
-        if arg in self.sim_objs[0].get_record_list():
-            for i in self.sim_objs:
-                self.sim_objs[i].send_msg(
-                    self.sim_objs[i].get_upload_record(arg))
-        else:
-            cprint.error_p("Unknow record: %s" % arg)
+        for i in self.sim_objs:
+            self.sim_objs[i].send_msg(
+                self.sim_objs[i].get_upload_record(int(arg)))
+
 
     def help_event(self):
         cprint.notice_p("send event")
-        for item in sorted(self.sim_objs[0].get_event_list()):
-            cprint.yinfo_p("%s" % item)
 
     def do_event(self, arg, opts=None):
-        if arg in self.sim_objs[0].get_event_list():
-            for i in self.sim_objs:
-                self.sim_objs[i].send_msg(
-                    self.sim_objs[i].get_upload_event(arg))
-        else:
-            cprint.error_p("Unknow event: %s" % arg)
+        for i in self.sim_objs:
+            self.sim_objs[i].send_msg(
+                self.sim_objs[i].get_upload_event(int(arg)))
 
     def help_set(self):
         cprint.notice_p("set state")

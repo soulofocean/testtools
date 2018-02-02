@@ -60,7 +60,7 @@ class communication_base(object):
         thread_list.append([self.schedule_loop])
         thread_list.append([self.send_data_loop])
         thread_list.append([self.recv_data_loop])
-        # thread_list.append([self.heartbeat_loop])
+        thread_list.append([self.heartbeat_loop])
         thread_ids = []
         for th in thread_list:
             thread_ids.append(threading.Thread(target=th[0], args=th[1:]))
