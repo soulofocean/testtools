@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """sim
-by Kobe Gong. 2018-01-29
+by Kobe Gong. 2017-12-26
 """
 
 
@@ -17,7 +17,6 @@ import random
 import re
 import shutil
 import signal
-import socket
 import struct
 import subprocess
 import sys
@@ -32,8 +31,7 @@ from APIs.common_APIs import (my_system, my_system_full_output,
 from basic.cprint import cprint
 from basic.log_tool import MyLogger
 from basic.task import Task
-from protocol.zb_devices import Led
-from protocol.zigbee_UART_protocol import ZIGBEE
+from protocol.wifi_devices import *
 
 if sys.getdefaultencoding() != 'utf-8':
     reload(sys)
@@ -56,24 +54,25 @@ class ArgHandle():
             '-t', '--time-delay',
             dest='time_delay',
             action='store',
-            default=0,
+            default=500,
             type=int,
-            help='time delay(ms) for msg send to server, default time is 500(ms)',
+            help='time delay(ms) for msg send to router, default time is 500(ms)',
         )
         parser.add_argument(
-            '-p', '--port',
-            dest='serial_port',
+            '-m', '--mac',
+            dest='mac',
             action='store',
-            default='5',
-            help='Specify serial port number',
+            default='123456',
+            help='Specify wifi module mac address',
         )
         parser.add_argument(
-            '-c', '--count',
-            dest='device_count',
+            '--device',
+            dest='device_type',
             action='store',
-            default=1,
-            type=int,
-            help='Specify how many devices to start, default is only 1',
+            choices={'air', 'hanger', 'waterfilter',
+                     'airfilter', 'washer', 'oven', 'repeater'},
+            default='air',
+            help='Specify device type',
         )
         return parser
 
@@ -90,10 +89,10 @@ class ArgHandle():
 
 
 class MyCmd(Cmd):
-    def __init__(self, logger, sim_objs=None):
+    def __init__(self, logger, sim_obj=None):
         Cmd.__init__(self)
         self.prompt = "SIM>"
-        self.sim_objs = sim_objs
+        self.sim_obj = sim_obj
         self.LOG = logger
 
     def help_log(self):
@@ -109,9 +108,7 @@ class MyCmd(Cmd):
             '4': logging.DEBUG,
         }
         if int(arg) in range(5):
-            for i in self.sim_objs:
-                cprint.notice_p("-" * 20)
-                self.sim_objs[i].LOG.set_level(level[arg])
+            self.LOG.set_level(level[arg])
         else:
             cprint.warn_p("unknow log level: %s!" % (arg))
 
@@ -119,17 +116,29 @@ class MyCmd(Cmd):
         cprint.notice_p("show state")
 
     def do_st(self, arg, opts=None):
-        for i in self.sim_objs:
-            cprint.notice_p("-" * 20)
-            self.sim_objs[i].status_show()
+        self.sim_obj.status_show()
 
     def help_set(self):
         cprint.notice_p("set state")
 
     def do_set(self, arg, opts=None):
         args = arg.split()
-        for i in self.sim_objs:
-            self.sim_objs[i].set_item(args[0], args[1])
+        self.sim_obj.set_item(args[0], args[1])
+
+    def help_alarm(self):
+        cprint.notice_p("send alarm:")
+        cprint.notice_p("alarm error_code error_status error_level error_msg")
+
+    def do_alarm(self, arg, opts=None):
+        args = arg.split()
+        if len(args) >= 2:
+            if len(args) == 3:
+                args.append('Test alarm')
+            else:
+                args.append(1)
+                args.append('Test alarm')
+        self.sim_obj.add_alarm(error_code=args[0], error_status=args[1], error_level=int(
+            args[2]), error_msg=args[3])
 
     def default(self, arg, opts=None):
         try:
@@ -175,7 +184,7 @@ def sys_cleanup():
 
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.DEBUG,
+    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.INFO,
                    rlevel=logging.WARN)
     cprint = cprint(__name__)
 
@@ -187,27 +196,41 @@ if __name__ == '__main__':
     global thread_list
     thread_list = []
 
-    sims = {}
-    log_level = logging.DEBUG
+    device_type = arg_handle.get_args('device_type')
+    device_cls = chr(
+        ord(device_type.lower()[0]) - 32) + device_type.lower()[1:]
+    Sim = eval(device_cls)
 
-    zigbee_obj = ZIGBEE('COM' + arg_handle.get_args('serial_port'),
-                        logger=LOG, time_delay=arg_handle.get_args('time_delay'))
-    zigbee_obj.run_forever()
-    for i in range(arg_handle.get_args('device_count')):
-        dev_LOG = MyLogger('dev_sim_%d.log' % (i), clevel=log_level)
-        zigbee_obj.add_device(Led)
+    sim = Sim(logger=LOG, time_delay=arg_handle.get_args(
+        'time_delay'), mac=arg_handle.get_args('mac'))
+    sim.run_forever()
 
+    task_obj = Task('test-task', LOG)
+    thread_list.append([task_obj.task_proc])
     sys_proc()
 
     if arg_handle.get_args('debug'):
-        dmsg = b'\x55\xaa\x10\x27\x01\x11\x22\x33\x77\x88\x99\x11\x33\x55\x66\x22\x88\x11\x11'
-        time.sleep(1)
-        zigbee_obj.queue_in.put(dmsg)
+        dmsg = {
+            "method": "dm_set",
+            "req_id": 178237278,
+            "nodeid": "wifi.main.alarm_confirm",
+            "params": {
+                "attribute": {
+                    "error_code": "3"
+                }
+            }
+        }
+
+        def test_task():
+            sim.sdk_obj.queue_in.put(
+                b'\x77\x56\x43\xaa' + struct.pack('>H', len(json.dumps(dmsg)) + 2) + b'\x03' + json.dumps(dmsg) + b'\x00')
+
+        task_obj.add_task('test', test_task, 1, 20)
 
     if True:
-        # signal.signal(signal.SIGINT, lambda signal,
-        #              frame: cprint.notice_p('Exit SYSTEM: exit'))
-        my_cmd = MyCmd(logger=LOG, sim_objs=zigbee_obj.devices)
+        signal.signal(signal.SIGINT, lambda signal,
+                      frame: cprint.notice_p('Exit SYSTEM: exit'))
+        my_cmd = MyCmd(logger=LOG, sim_obj=sim)
         my_cmd.cmdloop()
 
     else:

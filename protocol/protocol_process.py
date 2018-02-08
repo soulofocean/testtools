@@ -145,7 +145,7 @@ class communication_base(object):
                     continue
             self.recv_data_once()
 
-    def heartbeat_loop(self):
+    def heartbeat_loop(self, debug=True):
         while self.need_stop == False:
             if self.get_connection_state():
                 data = self.heartbeat_data
@@ -157,7 +157,8 @@ class communication_base(object):
                     tmp_data = data.decode('utf-8')
                 else:
                     tmp_data = data
-                self.LOG.yinfo("send msg: " + tmp_data)
+                if debug:
+                    self.LOG.yinfo("send msg: " + tmp_data)
                 self.send_data_once(data=data)
             else:
                 self.LOG.debug('offline?')

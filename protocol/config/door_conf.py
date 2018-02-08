@@ -5,14 +5,14 @@ import random
 
 # 设备初始化参数
 Attribute_initialization = {
-    "_type": 2016,
-    "_subDeviceType": 88,
-    "_deviceID": "1005200958FCDBDA5380",
-    "_subDeviceID": "301058FCDBDA53800001",
+    "mac_list": ['58:FC:DB:DA:53:80', '58:FC:DB:DA:53:81'],
+    "DeviceFacturer": 1005,
+    "DeviceType": 2009,
+    "subDeviceType": 3010,
+    "_type": 0,
     "_name": 'dog door',
     "_manufacturer": 'HDIOT',
     "_ip": "192.168.0.235",
-    "_mac": '58:FC:DB:DA:53:80',
     "_mask": '255.255.255.0',
     "_version": '1.0.01',
     "_time": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S').encode('utf-8'),
@@ -49,10 +49,6 @@ Attribute_initialization = {
         }
     }
 }
-
-
-
-
 
 
 # 注册设备支持的消息
@@ -116,7 +112,7 @@ COM_UPLOAD_RECORD = {
                     "recordTime": "TIMENOW",
                     "RecordType": "will_be_replace",
                     "CredenceType": "##self._CredenceType##",
-                    "passType": 'randint1',
+                    "passType": 0,
                 }
         ]
     }
@@ -157,7 +153,7 @@ COM_DEV_REGISTER = {
 # 定制设备需要应答的消息
 u'''功能命令：设备目录查询'''
 COM_QUERY_DIR = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_QUERY_DIR",
         "Result": 0,
@@ -167,7 +163,7 @@ COM_QUERY_DIR = {
                 "name": "##self._name##",
                 "manufacturer": "##self._manufacturer##",
                 "version": "##self._version##",
-                "subDeviceType": "##self._subDeviceType##"
+                "subDeviceType": "##self.subDeviceType##"
             }
         ]
     }
@@ -176,7 +172,7 @@ COM_QUERY_DIR = {
 
 u'''功能命令：恢复出厂设置'''
 COM_DEV_RESET = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_DEV_RESET",
         "Result": 0,
@@ -185,7 +181,7 @@ COM_DEV_RESET = {
 
 u'''功能命令：读取时间'''
 COM_READ_TIME = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_READ_TIME",
         "Result": 0,
@@ -205,12 +201,11 @@ COM_SET_TIME = {
         "Command": "COM_SET_TIME",
         "Result": 0,
     }
-
 }
 
 u'''功能命令：立即校时'''
 COM_CORRECTION = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_CORRECTION",
         "Result": 0,
@@ -221,7 +216,7 @@ COM_CORRECTION = {
 
 u'''功能命令：读取系统版本信息'''
 COM_READ_SYSTEM_VERSION = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_READ_SYSTEM_VERSION",
         "Result": 0,
@@ -253,7 +248,7 @@ COM_NOTIFY_UPDATE = {
 
 u'''功能命令：读取参数'''
 COM_READ_PARAMETER = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_READ_PARAMETER",
         "Result": 0,
@@ -293,7 +288,7 @@ COM_LOAD_CERTIFICATE = {
 
 u'''功能命令：读取固定凭证信息'''
 COM_READ_CERTIFICATE = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_READ_CERTIFICATE",
         "Result": 0,
@@ -311,7 +306,7 @@ COM_READ_CERTIFICATE = {
 
 u'''功能命令：删除固定凭证信息'''
 COM_DELETE_CERTIFICATE = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_DELETE_CERTIFICATE",
         "Result": 0,
@@ -320,7 +315,7 @@ COM_DELETE_CERTIFICATE = {
 
 u'''功能命令：批量下发固定凭证信息'''
 COM_LOAD_CERTIFICATE_IN_BATCH = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_LOAD_CERTIFICATE_IN_BATCH",
         "Result": 0,
@@ -338,7 +333,7 @@ COM_GATE_CONTROL = {
 
 u'''功能命令：设备状态查询'''
 COM_QUERY_DEV_STATUS = {
-    'set_item':{},
+    'set_item': {},
     "rsp_msg": {
         "Command": "COM_QUERY_DEV_STATUS",
         "Result": 0,

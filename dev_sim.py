@@ -113,7 +113,8 @@ class ArgHandle():
                 'self_IP').split('.')[0:-1])
             ip_start = arg_handle.get_args('self_IP').split('.')[-1]
             cprint.notice_p("Start ip: %s" % (ip_start))
-            ipv4s = [ip for ip in ipv4s if re.search(r'%s' % (ip_prefix), ip) and int(ip.split('.')[-1]) >= int(ip_start)]
+            ipv4s = [ip for ip in ipv4s if re.search(
+                r'%s' % (ip_prefix), ip) and int(ip.split('.')[-1]) >= int(ip_start)]
             if len(ipv4s) < arg_handle.get_args('device_count'):
                 cprint.error_p("Local ips: %d not enough" % (len(ipv4s)))
                 sys.exit()
@@ -174,7 +175,6 @@ class MyCmd(Cmd):
         for i in self.sim_objs:
             self.sim_objs[i].send_msg(
                 self.sim_objs[i].get_upload_record(int(arg)))
-
 
     def help_event(self):
         cprint.notice_p("send event")
@@ -259,7 +259,7 @@ if __name__ == '__main__':
         self_addr = (ipv4_list[i], random.randint(
             arg_handle.get_args('server_port'), 65535))
         sim = Door(logger=dev_LOG, config_file=arg_handle.get_args('config_file'), server_addr=(
-            arg_handle.get_args('server_IP'), arg_handle.get_args('server_port')), self_addr=self_addr)
+            arg_handle.get_args('server_IP'), arg_handle.get_args('server_port')), self_addr=self_addr, N=i)
         # thread_list.append([sim.run_forever])
         sim.run_forever()
         sims[i] = sim

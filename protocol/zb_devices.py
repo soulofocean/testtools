@@ -62,7 +62,6 @@ class BaseSim():
             self.LOG.error("add item fail: %s" % (item))
 
     def status_show(self):
-        self.LOG.warn("xxoo")
         for item in sorted(self.__dict__):
             if item.startswith('_'):
                 self.LOG.warn("%s: %s" % (item, str(self.__dict__[item])))
@@ -136,7 +135,8 @@ class BaseSim():
             'Read attribute response': {
                 b'\x00\x00': {
                     'cmd': b'\x01\x00\x00\x04\x00',
-                    'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
+                    'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
+                    #'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
                 },
 
                 b'\x06\x00': {
@@ -146,7 +146,12 @@ class BaseSim():
 
                 b'\x08\x00': {
                     'cmd': b'\x01\x08\x00\x00\x00',
-                    'data': b'\x00' + b'\x20' + b'\x01' + b'\x00',
+                    'data': b'\x00' + b'\x20' + b'\x01' + self._Level[0:0 + 1],
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x01\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00' + b'\x21' + b'\x04' + self._Color_X + self._Color_Y,
                 },
             },
 
@@ -158,17 +163,22 @@ class BaseSim():
             'Configure reporting response': {
                 b'\x06\x00': {
                     'cmd': b'\x07\x06\x00\x00\x00',
-                    'data': b'\x00\x01',
+                    'data': b'\x00\x00\x00\x00',
                 },
 
                 b'\x08\x00': {
                     'cmd': b'\x07\x08\x00\x00\x00',
-                    'data': b'\x00\x01',
+                    'data': b'\x00\x00\x00\x00',
+                },
+
+                b'\x00\x03': {
+                    'cmd': b'\x07\x00\x03' + self.cmd[3:3 + 2],
+                    'data': b'\x00\x00\x00\x00',
                 },
 
                 'default': {
                     'cmd': b'\x07\x00\x00\x00\x00',
-                    'data': b'\x00\x01',
+                    'data': b'\x00\x00\x00\x00',
                 },
             },
         }
@@ -212,14 +222,14 @@ class Led(BaseSim):
         super(Led, self).__init__(logger=self.LOG)
 
         # state data:
-        self._Switch = b'\x02\x00'
+        self._Switch = b'\x00\x00'
         self._Hue = b''
-        self._Saturation = b''
+        self.Saturation = b''
         self.Transition_time = b''
         self._Color_X = b''
         self._Color_Y = b''
         self._Color_Temperature = b''
-        self._Level = b''
+        self._Level = b'\x00\x00'
         self._Window_covering = b''
         self.Percentage_Lift_Value = b''
         self.Short_id = short_id
@@ -227,6 +237,7 @@ class Led(BaseSim):
         self.mac = str(mac) + b'\x00' * (8 - len(str(mac)))
         self.Capability = b'\x01'
         self.seq = b'\x01'
+        self.cmd = b''
         self.addr = b''
         self.task_obj = Task('Washer-task', self.LOG)
         self.create_tasks()
@@ -289,6 +300,7 @@ class Led(BaseSim):
             self.send_msg(self.get_default_response(datas))
             self.set_seq(datas['seq'])
             self.addr = datas['addr']
+            self.cmd = datas['cmd']
 
         req_cmd_type = datas['cmd'][0:0 + 1]
         req_cmd_domain = datas['cmd'][1:1 + 2]
@@ -314,6 +326,7 @@ class Led(BaseSim):
                 pass
 
         elif datas['cmd'] == b'\x40\x34\x00\x01\x00':
+            self.sdk_obj.set_work_status(False)
             rsp_data = self.get_cmd('Leave response')
             if rsp_data:
                 rsp_datas['cmd'] = rsp_data['cmd']
@@ -356,6 +369,7 @@ class Led(BaseSim):
                 pass
 
         elif datas['cmd'][0:0 + 1] == b'\x06':
+            self.sdk_obj.set_work_status(False)
             rsp_data = self.get_cmd('Configure reporting response')
             if rsp_data:
                 if datas['cmd'][1:1 + 2] == b'\x06\x00':
@@ -365,6 +379,11 @@ class Led(BaseSim):
                 elif datas['cmd'][1:1 + 2] == b'\x08\x00':
                     rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
                     rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
+
                 else:
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
                     rsp_datas['data'] = rsp_data['default']['data']
@@ -374,30 +393,31 @@ class Led(BaseSim):
 
         elif datas['cmd'][0:0 + 1] == b'\x41':
             if datas['cmd'][1:1 + 2] == b'\x06\x00':
-                self.set_item('_Switch', datas['cmd'][3:3 + 2])
+                if datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Switch', b'\x00')
+                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                    self.set_item('_Switch', b'\x01')
+                else:
+                    self.set_item('_Switch', b'\x02')
 
             elif datas['cmd'][1:1 + 2] == b'\x00\x03':
                 if datas['cmd'][3:3 + 2] == b'\x06\x00':
                     self.set_item('_Hue', datas['data'][0:0 + 1])
-                    self.set_item('_Saturation', datas['data'][1:1 + 1])
-                    #self.set_item('Transition_time', datas['data'][2:2 + 2])
+                    self.set_item('Saturation', datas['data'][1:1 + 1])
 
                 elif datas['cmd'][3:3 + 2] == b'\x07\x00':
                     self.set_item('_Color_X', datas['data'][0:0 + 2])
                     self.set_item('_Color_Y', datas['data'][2:2 + 2])
-                    #self.set_item('Transition_time', datas['data'][4:4 + 2])
 
                 elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
                     self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
-                    #self.set_item('Transition_time', datas['data'][2:2 + 2])
 
                 else:
                     self.LOG.error(protocol_data_printB(
                         datas['cmd'][3:3 + 2], title='Unknow cmd:'))
 
             elif datas['cmd'][1:1 + 2] == b'\x08\x00':
-                self.set_item('_Level', datas['cmd'][0:0 + 1])
-                #self.set_item('Transition_time', datas['data'][1:1 + 2])
+                self.set_item('_Level', datas['data'][0:0 + 1])
 
             elif datas['cmd'][1:1 + 2] == b'\x02\x01':
                 if datas['cmd'][3:3 + 2] == b'\x00\x00':
@@ -426,20 +446,26 @@ class Led(BaseSim):
 
         else:
             self.LOG.error("What is the fuck msg?")
-            return "No_need_send"
+            return
 
         self.LOG.yinfo("send msg: " + self.convert_to_dictstr(rsp_datas))
         return rsp_datas
 
     def event_report_proc(self, req_cmd_word):
         if req_cmd_word == '_Switch':
-            return self.send_msg(self.get_event_report(self._Switch, data=b''))
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x06\x00' + b'\x00\x00', data=b'\x10' + self._Switch))
 
         elif req_cmd_word == '_Hue':
-            pass
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x06\x00', data=b'\x10' + self._Hue))
+
+        elif req_cmd_word == '_Color_Temperature':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x0a\x00', data=b'\x21' + self._Color_Temperature))
+
+        elif req_cmd_word == '_Color_X':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x07\x00', data=b'\x21' + self._Color_X + self._Color_Y))
 
         elif req_cmd_word == '_Level':
-            pass
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x08\x00' + b'\x00\x00', data=b'\x20' + self._Level))
 
         elif req_cmd_word == '_Window_covering':
             pass
@@ -447,13 +473,13 @@ class Led(BaseSim):
         else:
             pass
 
-    def get_event_report(self, req_cmd_word, data):
+    def get_event_report(self, req_cmd_word=b'\x0a' + b'\x06\x00' + b'\x00\x00', data=b'\x10\x01'):
         self.add_seq()
         send_datas = {
             'control': b'\x00',
             'seq': self.seq,
             'addr': self.addr,
-            'cmd': b'\x0a' + b'\x00\x00' + req_cmd_word,
+            'cmd': req_cmd_word,
             'reserve': b'',
             'data': data,
         }

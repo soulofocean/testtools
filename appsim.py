@@ -95,7 +95,7 @@ class ArgHandle():
             '--device',
             dest='device_type',
             action='store',
-            choices={'air', 'led', 'switch'},
+            choices={'air', 'led', 'switch', 'debug'},
             default='air',
             help="Specify device type: 'air', 'led', 'switch'",
         )
@@ -205,6 +205,78 @@ def login_router(phone, password):
         }
     }
     return str(json.dumps(msg)) + '\n'
+
+
+def debug(req_id, uuid, *args):
+    msg = {
+        "uuid": "111",
+        "encry": "false",
+        "content": {
+            "method": "dm_set",
+            "req_id": req_id,
+            "timestamp": 123456789,
+            "nodeid": "bulb.main.rgb",
+            "params": {
+                #"user_id": 2042,
+                "device_uuid": uuid,
+                "attribute": {
+                    "r": 255,
+                    "g": 0,
+                    "b": 0,
+                    "transition_time": 10,
+                    "need_confirm": 'false'
+                }
+            }
+        }
+    }
+    return json.dumps(msg) + '\n'
+
+
+def debug2(req_id, uuid, *args):
+    msg = {
+        "uuid": "111",
+        "encry": "false",
+        "content": {
+            "method": "dm_set",
+            "req_id": req_id,
+            "timestamp": 123456789,
+            "nodeid": "bulb.main.temperature",
+            "params": {
+                #"user_id": 2042,
+                "device_uuid": uuid,
+                "attribute": {
+                    "temperature": 60000,
+                    "transition_time": 10,
+                    "need_confirm": 'false'
+                }
+            }
+        }
+    }
+    return json.dumps(msg) + '\n'
+
+
+def debug3(req_id, uuid, *args):
+    msg = {
+        "uuid": "111",
+        "encry": "false",
+        "content": {
+            "method": "dm_set",
+            "req_id": req_id,
+            "timestamp": 123456789,
+            "nodeid": "bulb.main.hue",
+            "params": {
+                #"user_id": 2042,
+                "device_uuid": uuid,
+                "attribute": {
+                    "hue": 100,
+                    "saturation": 254,
+                    "transition_time": 10,
+                    "need_confirm": 'false'
+                }
+            }
+        }
+    }
+    return json.dumps(msg) + '\n'
 
 
 def temperature_set_msg(req_id, uuid, *args):
@@ -403,7 +475,22 @@ if __name__ == '__main__':
         app.queue_out.put(msg)
         time.sleep(1)
 
-        if arg_handle.get_args('device_type') == 'air':
+        if arg_handle.get_args('device_type') == 'debug':
+            for i in range(arg_handle.get_args('number_to_send')):
+                j = 100000
+                req_id = i + 11000000
+                for uuid in uuids:
+                    req_id += j
+                    j += 1
+                    msg = debug(req_id, uuid)
+                    app.msgst[req_id]['send_time'] = datetime.datetime.now()
+                    app.queue_out.put(msg)
+                    LOG.info("send: " + msg.strip())
+                    time.sleep(arg_handle.get_args('t2') / 1000.0)
+
+                time.sleep(arg_handle.get_args('time_interval') / 1000.0)
+
+        elif arg_handle.get_args('device_type') == 'air':
             for i in range(arg_handle.get_args('number_to_send')):
                 j = 100000
                 req_id = i + 88000000

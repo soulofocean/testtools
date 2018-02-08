@@ -116,7 +116,7 @@ class BaseSim():
 
 
 class Door(BaseSim):
-    def __init__(self, logger, config_file, server_addr, self_addr=None):
+    def __init__(self, logger, config_file, server_addr, self_addr=None, N=0):
         module_name = "protocol.config.%s" % config_file
         mod = __import__(module_name)
         components = module_name.split('.')
@@ -124,6 +124,7 @@ class Door(BaseSim):
             mod = getattr(mod, comp)
         self.sim_config = mod
         self.LOG = logger
+        self.N = N
         self.attribute_initialization()
         self.sdk_obj = SDK(addr=server_addr,
                            logger=logger, time_delay=0, self_addr=self_addr)
@@ -163,7 +164,7 @@ class Door(BaseSim):
         self.task_obj.add_task(
             'dev register', self.to_register_dev, 1, 1)
 
-        #self.task_obj.add_task(
+        # self.task_obj.add_task(
         #    'check register', self.check_register_dev, 1, 10)
 
         self.task_obj.add_task(
@@ -242,7 +243,7 @@ class Door(BaseSim):
                 self.LOG.warn(common_APIs.chinese_show("设备已经注册"))
             else:
                 self.LOG.error(common_APIs.chinese_show("设备注册失败"))
-                sys.exit()          
+                sys.exit()
 
     def to_send_heartbeat(self):
         self.send_msg(json.dumps(
@@ -329,6 +330,14 @@ class Door(BaseSim):
             self.sim_config, "Attribute_initialization")
         for attribute_params, attribute_params_value in attribute_params_dict.items():
             self.add_item(attribute_params, attribute_params_value)
+
+        self._mac = self.mac_list[self.N]
+        #"_deviceID": "1005200958FCDBDA5380",
+        #"_subDeviceID": "301058FCDBDA53800001",
+        self._deviceID = str(self.DeviceFacturer) + \
+            str(self.DeviceType) + self._mac.replace(":", '')
+        self._subDeviceID = str(self.subDeviceType) + \
+            self._mac.replace(":", '') + "%04d" % (self.N + 1)
 
 
 if __name__ == '__main__':
