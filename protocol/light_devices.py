@@ -38,13 +38,27 @@ coding = sys.getfilesystemencoding()
 class BaseSim():
     __metaclass__ = ABCMeta
     status_lock = threading.Lock()
+    msgst_lock = threading.Lock()
 
     def __init__(self, logger):
         self.LOG = logger
         self.sdk_obj = None
 
         # state data:
+        self.msgst = defaultdict(lambda: {})
         self.task_obj = None
+
+    @common_APIs.need_add_lock(msgst_lock)
+    def update_msgst(self, command, direct):
+        if command in self.msgst:
+            pass
+        else:
+            self.msgst[command] = {
+                'req': 0,
+                'rsp': 0,
+            }
+
+        self.msgst[command][direct] += 1
 
     @common_APIs.need_add_lock(status_lock)
     def set_item(self, item, value):
@@ -65,7 +79,15 @@ class BaseSim():
             if item.startswith('_'):
                 self.LOG.warn("%s: %s" % (item, str(self.__dict__[item])))
 
+        self.LOG.warn('~' * 10)
+        for msg_code in self.msgst:
+            self.LOG.warn("%s:" % (msg_code))
+            self.LOG.warn("\t\t\treq: %d" % (self.msgst[msg_code]['req']))
+            self.LOG.warn("\t\t\trsp: %d" % (self.msgst[msg_code]['rsp']))
+            self.LOG.warn("-" * 30)
+
     def send_msg(self, msg):
+        self.update_msgst(json.loads(msg)['Command'], 'req')
         return self.sdk_obj.add_send_data(self.sdk_obj.msg_build(msg))
 
     @abstractmethod
@@ -117,6 +139,7 @@ class BaseSim():
 
 class Door(BaseSim):
     def __init__(self, logger, config_file, server_addr, self_addr=None, N=0):
+        super(Door, self).__init__(logger)
         module_name = "protocol.config.%s" % config_file
         mod = __import__(module_name)
         components = module_name.split('.')
@@ -179,7 +202,10 @@ class Door(BaseSim):
         random.shuffle(msgs)
         for msg in msgs:
             self.LOG.debug(msg)
-        while self.need_stop == False:
+
+        count = 0
+        while self.need_stop == False and count < self.test_msgs["round"]:
+            count += 1
             for msg in msgs:
                 time.sleep(self.test_msgs["interval"] / 1000.0)
                 tmp_msg = msg.split('.')
@@ -191,7 +217,6 @@ class Door(BaseSim):
                     self.send_msg(self.get_upload_event(tmp_msg[-1]))
                 else:
                     self.LOG.error("Unknow msg to dispatch: %s" % (msg))
-            # time.sleep(9999)
 
     def status_maintain(self):
         for item in self.SPECIAL_ITEM:
@@ -277,6 +302,7 @@ class Door(BaseSim):
     def protocol_handler(self, msg, ack=False):
         coding = sys.getfilesystemencoding()
         if ack:
+            self.update_msgst(msg['Command'], 'rsp')
             if msg['Command'] == 'COM_DEV_REGISTER':
                 if msg['Result'] == 0:
                     self.dev_register = True
@@ -286,10 +312,13 @@ class Door(BaseSim):
             else:
                 #self.LOG.warn('Unknow msg: %s!' % (msg['Command']))
                 return None
+        else:
+            self.update_msgst(msg['Command'], 'req')
 
         if msg['Command'] in self.command_list:
             self.set_items(msg['Command'], msg)
             rsp_msg = self.get_rsp_msg(msg['Command'])
+            self.update_msgst(msg['Command'], 'rsp')
             return json.dumps(rsp_msg)
         else:
             self.LOG.warn('Unknow msg: %s!' % (msg['Command']))

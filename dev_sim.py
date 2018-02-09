@@ -155,7 +155,7 @@ class MyCmd(Cmd):
         }
         if int(arg) in range(5):
             for i in self.sim_objs:
-                cprint.notice_p("-" * 20)
+                cprint.notice_p("=" * 40)
                 self.sim_objs[i].LOG.set_level(level[arg])
         else:
             cprint.warn_p("unknow log level: %s!" % (arg))

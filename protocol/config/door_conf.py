@@ -42,10 +42,11 @@ Attribute_initialization = {
 
     "test_msgs": {
         "interval": 1000,
+        "round": 2,
         "msgs": {
-            "COM_UPLOAD_DEV_STATUS": 0,
-            "COM_UPLOAD_RECORD.Data[0].RecordType.30001": 0,
-            "COM_UPLOAD_EVENT.Data[0].EventType.NFC_EVENT": 0,
+            "COM_UPLOAD_DEV_STATUS": 2,
+            "COM_UPLOAD_RECORD.Data[0].RecordType.30001": 3,
+            "COM_UPLOAD_EVENT.Data[0].EventType.30301": 5,
         }
     }
 }
