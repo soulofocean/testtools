@@ -32,7 +32,7 @@ from APIs.common_APIs import (my_system, my_system_full_output,
 from basic.cprint import cprint
 from basic.log_tool import MyLogger
 from basic.task import Task
-from protocol.zb_devices import Led
+from protocol.zb_devices import Curtain, Led
 from protocol.zigbee_UART_protocol import ZIGBEE
 
 if sys.getdefaultencoding() != 'utf-8':
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     zigbee_obj.run_forever()
     for i in range(arg_handle.get_args('device_count')):
         dev_LOG = MyLogger('dev_sim_%d.log' % (i), clevel=log_level)
-        zigbee_obj.add_device(Led)
+        zigbee_obj.add_device(Curtain)
 
     sys_proc()
 

@@ -103,7 +103,7 @@ class BaseSim():
 
     def create_tasks(self):
         self.task_obj.add_task(
-            'status maintain', self.status_maintain, 10000000, 1)
+            'status maintain', self.status_maintain, 10000000, 1000)
 
         self.task_obj.add_task('monitor event report',
                                self.status_report_monitor, 10000000, 1)
@@ -428,12 +428,12 @@ class Hanger(BaseSim):
                 if self._status == 'up':
                     self.task_obj.del_task('change_status_bottom')
                     self.task_obj.add_task(
-                        'change_status_top', self.set_item, 1, 10, '_status', 'top')
+                        'change_status_top', self.set_item, 1, 10000, '_status', 'top')
 
                 elif self._status == 'down':
                     self.task_obj.del_task('change_status_top')
                     self.task_obj.add_task(
-                        'change_status_bottom', self.set_item, 1, 10, '_status', 'bottom')
+                        'change_status_bottom', self.set_item, 1, 10000, '_status', 'bottom')
 
                 elif self._status == 'pause':
                     self.task_obj.del_task('change_status_top')
@@ -597,7 +597,7 @@ class WaterFilter(BaseSim):
                     ("设置冲洗: %s" % (msg['params']["attribute"]["control"])).encode(coding))
                 self.set_item('_status', msg['params']["attribute"]["control"])
                 self.task_obj.add_task(
-                    'change WaterFilter to filter', self.set_item, 1, 30, '_status', 'filter')
+                    'change WaterFilter to filter', self.set_item, 1, 30000, '_status', 'filter')
                 return self.dm_set_rsp(msg['req_id'])
 
             elif msg['nodeid'] == u"water_filter.main.reset_filter":
@@ -977,7 +977,7 @@ class Oven(BaseSim):
                     '_reserve_bake', msg['params']["attribute"]["reserve_bake"])
                 self.task_obj.del_task('switch')
                 self.task_obj.add_task(
-                    'switch', self.set_item, 1, self._reserve_bake, '_switch', 'off')
+                    'switch', self.set_item, 1, self._reserve_bake * 1000, '_switch', 'off')
                 return self.dm_set_rsp(msg['req_id'])
 
             elif msg['nodeid'] == u"wifi.main.alarm_confirm":

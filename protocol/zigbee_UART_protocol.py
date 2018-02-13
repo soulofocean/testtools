@@ -170,7 +170,7 @@ class ZIGBEE(communication_base):
                 'reserve': reserve_data,
                 'data': data,
             }
-            #self.LOG.info("recv msg: " + self.convert_to_dictstr(datas))
+            #self.LOG.info("debug recv msg: " + self.convert_to_dictstr(datas))
             time.sleep(self.time_delay / 1000.0)
             rsp_datas = self.devices[dst_addr].protocol_handler(datas)
             rsp_msg = ''

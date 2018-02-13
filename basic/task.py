@@ -35,6 +35,7 @@ class Task():
         self.LOG.warn('Thread %s stoped!' % (__name__))
 
     def add_task(self, name, func, run_times=1, interval=5, *argv):
+        self.lock.acquire()
         if name and func and int(run_times) >= 1 and int(interval) >= 1:
             pass
         else:
@@ -42,7 +43,6 @@ class Task():
                            (name, int(run_times), int(interval)))
         self.LOG.info("To add task: %s, run_times: %d, internal: %d" %
                       (name, int(run_times), int(interval)))
-        self.lock.acquire()
         self.tasks[name] = {
             'func': func,
             'run_times': int(run_times),
@@ -81,34 +81,39 @@ class Task():
                 if self.tasks[task]['state'] == 'inactive':
                     self.del_task(task)
             '''
-
-            for task in self.tasks:
-                if self.tasks[task]['state'] != 'active':
-                    continue
+            try:
                 self.lock.acquire()
-                self.tasks[task]['now_seconds'] += 1
-                if self.tasks[task]['now_seconds'] >= self.tasks[task]['interval']:
-                    if callable(self.tasks[task]['func']):
-                        # self.LOG.info("It is time to run %s: " % (
-                        #    task) + self.tasks[task]['func'].__name__ + str(self.tasks[task]['argv']))
-                        self.tasks[task]['func'](*(self.tasks[task]['argv']))
-                    elif callable(eval(self.tasks[task]['func'])):
-                        # self.LOG.info("It is time to run %s: " % (
-                        #    task) + self.tasks[task]['func'] + str(self.tasks[task]['argv']))
-                        eval(self.tasks[task]['func'] + '(*' +
-                             str(self.tasks[task]['argv']) + ')')
+                for task in self.tasks:
+                    if self.tasks[task]['state'] != 'active':
+                        continue
+                    self.tasks[task]['now_seconds'] += 1
+                    if self.tasks[task]['now_seconds'] >= self.tasks[task]['interval']:
+                        if callable(self.tasks[task]['func']):
+                            # self.LOG.info("It is time to run %s: " % (
+                            #    task) + self.tasks[task]['func'].__name__ + str(self.tasks[task]['argv']))
+                            self.tasks[task]['func'](
+                                *(self.tasks[task]['argv']))
+                        elif callable(eval(self.tasks[task]['func'])):
+                            # self.LOG.info("It is time to run %s: " % (
+                            #    task) + self.tasks[task]['func'] + str(self.tasks[task]['argv']))
+                            eval(self.tasks[task]['func'] + '(*' +
+                                 str(self.tasks[task]['argv']) + ')')
+                        else:
+                            self.LOG.error(
+                                "Uncallable task: %s, will disable it!")
+                            self.tasks[task]['state'] = 'inactive'
+                        self.tasks[task]['now_seconds'] = 0
+                        self.tasks[task]['run_times'] -= 1
+                        if self.tasks[task]['run_times'] == 0:
+                            self.LOG.info("stop task:%s" % (task))
+                            self.tasks[task]['state'] = 'inactive'
                     else:
-                        self.LOG.error("Uncallable task: %s, will disable it!")
-                        self.tasks[task]['state'] = 'inactive'
-                    self.tasks[task]['now_seconds'] = 0
-                    self.tasks[task]['run_times'] -= 1
-                    if self.tasks[task]['run_times'] == 0:
-                        self.LOG.info("stop task:%s" % (task))
-                        self.tasks[task]['state'] = 'inactive'
-                else:
-                    pass
+                        pass
                 self.lock.release()
-            time.sleep(1)
+                time.sleep(0.001)
+
+            except RuntimeError:
+                pass
 
 
 if __name__ == '__main__':
