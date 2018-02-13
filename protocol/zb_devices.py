@@ -179,10 +179,9 @@ class Led(BaseSim):
         self._Switch = b'\x00\x00'
         self._Hue = b''
         self.Saturation = b''
-        self.Transition_time = b''
-        self._Color_X = b''
-        self._Color_Y = b''
-        self._Color_Temperature = b''
+        self._Color_X = b'\x66\x2d'
+        self._Color_Y = b'\xdf\x5c'
+        self._Color_Temperature = b'\xdd\x00'
         self._Level = b'\x00\x00'
         self._Window_covering = b''
         self.Percentage_Lift_Value = b''
@@ -442,14 +441,11 @@ class Led(BaseSim):
         if req_cmd_word == '_Switch':
             return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x06\x00' + b'\x00\x00', data=b'\x10' + self._Switch))
 
-        elif req_cmd_word == '_Hue':
-            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x06\x00', data=b'\x10' + self._Hue))
-
-        elif req_cmd_word == '_Color_Temperature':
-            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x0a\x00', data=b'\x21' + self._Color_Temperature))
-
-        elif req_cmd_word == '_Color_X':
-            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x07\x00', data=b'\x21' + self._Color_X + self._Color_Y))
+        elif req_cmd_word == '_Color_Temperature' or req_cmd_word == '_Color_X':
+            return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x00\x03' + b'\x04\x00',
+                                                       data=b'\x21' + self._Color_Y + b'\x03\x00' +
+                                                       b'\x21' + self._Color_X + b'\x07\x00' +
+                                                       b'\x21' + self._Color_Temperature))
 
         elif req_cmd_word == '_Level':
             return self.send_msg(self.get_event_report(req_cmd_word=b'\x0a' + b'\x08\x00' + b'\x00\x00', data=b'\x20' + self._Level))
@@ -829,9 +825,6 @@ class Switch(BaseSim):
                     pass
 
             elif datas['cmd'][1:] == b'\x21\x00\x00\x00':
-                #self.set_item('mac', datas['data'][0:0 + 8])
-                #self.set_item('endpoint', datas['data'][8:8 + 1])
-                #self.set_item('Short_id', datas['data'][9:9 + 2])
                 rsp_data = self.get_cmd('Bind response')
                 if rsp_data:
                     rsp_datas['cmd'] = rsp_data['cmd']

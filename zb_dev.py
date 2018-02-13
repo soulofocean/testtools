@@ -195,7 +195,7 @@ if __name__ == '__main__':
     zigbee_obj.run_forever()
     for i in range(arg_handle.get_args('device_count')):
         dev_LOG = MyLogger('dev_sim_%d.log' % (i), clevel=log_level)
-        zigbee_obj.add_device(Curtain)
+        zigbee_obj.add_device(Led)
 
     sys_proc()
 

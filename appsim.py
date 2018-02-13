@@ -220,9 +220,9 @@ def debug(req_id, uuid, *args):
                 #"user_id": 2042,
                 "device_uuid": uuid,
                 "attribute": {
-                    "r": 255,
-                    "g": 0,
-                    "b": 0,
+                    "r": 88,
+                    "g": 88,
+                    "b": 88,
                     "transition_time": 10,
                     "need_confirm": 'false'
                 }
