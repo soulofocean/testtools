@@ -20,6 +20,7 @@ from collections import defaultdict
 import APIs.common_APIs as common_APIs
 from APIs.common_APIs import (bit_clear, bit_get, bit_set, crc16,
                               protocol_data_printB)
+from basic.task import Task
 from connections.my_serial import MySerial
 from protocol.protocol_process import communication_base
 
@@ -33,6 +34,7 @@ coding = sys.getfilesystemencoding()
 
 class ZIGBEE(communication_base):
     status_lock = threading.Lock()
+    factory_lock = threading.Lock()
 
     def __init__(self, port, logger, time_delay=0):
         self.port = port
@@ -41,11 +43,12 @@ class ZIGBEE(communication_base):
                                      queue_out=Queue.Queue(), logger=logger, left_data='', min_length=18)
         self.connection = MySerial(port, 115200, logger)
         self.devices = defaultdict(str)
-        self.factorys = []
+        self.factory = ''
         self.state = 'close'
         self.time_delay = time_delay
         self.heartbeat_interval = 3
         self.heartbeat_data = ''
+        self.task_obj = Task('zigbee-UART-task', self.LOG)
 
         # status data:
         self.head = b'\xaa\x55'
@@ -53,18 +56,21 @@ class ZIGBEE(communication_base):
         self.src_addr = b'\x00\x00\xf1'
         self.working = False
 
+    @common_APIs.need_add_lock(factory_lock)
     def set_work_status(self, status):
+        if status:
+            self.LOG.warn("Set factory in busy status!")
+        else:
+            self.LOG.warn("Clear factory from busy status!")
         self.working = status
 
-    def add_device(self, factory):
-        self.factorys.append(factory)
-        self.LOG.info("Add factory: %s success! Now has %d factory!" %
-                      (factory.__name__, len(self.factorys)))
+    @common_APIs.need_add_lock(factory_lock)
+    def get_work_status(self):
+        return self.working
 
-    def del_device(self):
-        self.factorys = self.factorys[1:]
-        self.LOG.info("Del factory success! Now has %d factory!" %
-                      (len(self.factorys)))
+    def set_device(self, factory):
+        self.factory = factory
+        self.LOG.info("Set factory: %s success!" % (factory.__name__))
 
     def msg_build(self, datas):
         if len(datas) < 6:
@@ -108,6 +114,21 @@ class ZIGBEE(communication_base):
 
         return msg_list, left_data
 
+    def run_forever(self):
+        thread_list = []
+        thread_list.append([self.schedule_loop])
+        thread_list.append([self.send_data_loop])
+        thread_list.append([self.recv_data_loop])
+        thread_list.append([self.heartbeat_loop])
+        thread_list.append([self.task_obj.task_proc])
+        thread_ids = []
+        for th in thread_list:
+            thread_ids.append(threading.Thread(target=th[0], args=th[1:]))
+
+        for th in thread_ids:
+            th.setDaemon(True)
+            th.start()
+
     def protocol_handler(self, msg):
         if msg[0:2] == b'\xaa\x55':
             length = struct.unpack('B', msg[2:2 + 1])[0]
@@ -118,27 +139,31 @@ class ZIGBEE(communication_base):
             self.dst_addr = src_addr
             #self.src_addr = dst_addr
             cmd = msg[11:11 + 5]
+            if dst_addr == b'\x00\x00\x00':
+                self.LOG.error('Unknow address!')
+                return 'No_need_send'
+
             if dst_addr in self.devices:
                 pass
             else:
-                if self.factorys and self.working == False:
+                if self.factory and self.get_work_status() == False:
+                    self.set_work_status(True)
+                    self.task_obj.add_task(
+                        'reset factory status', self.set_work_status, 1, 500, False)
                     mac = ''.join(random.sample('0123456789abcdef', 3))
                     short_id = chr(random.randint(0, 255)) + \
                         chr(random.randint(0, 255))
                     Endpoint = b'\x00'
                     dst_addr = short_id + Endpoint
-                    self.devices[dst_addr] = self.factorys[0](
+                    self.devices[dst_addr] = self.factory(
                         logger=self.LOG, mac=mac, short_id=short_id, Endpoint=Endpoint)
                     self.devices[dst_addr].sdk_obj = self
                     self.devices[dst_addr].run_forever()
                     self.devices[short_id + b'\x01'] = self.devices[dst_addr]
                     self.LOG.warn("It is time to create a new zigbee device, type: %s, mac: %s" % (
-                        self.factorys[0].__name__, mac))
-                    # self.del_device()
-                    self.set_work_status(True)
+                        self.factory.__name__, mac))
                 else:
-                    self.LOG.error(
-                        "What is Fuck? Now has %d factory!" % (len(self.factorys)))
+                    self.LOG.error("Factory busy!")
                     data_length = length - 16
                     data = msg[-2 - data_length:-2]
                     datas = {

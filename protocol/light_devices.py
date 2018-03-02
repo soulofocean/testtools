@@ -179,19 +179,19 @@ class Door(BaseSim):
 
     def create_tasks(self):
         self.task_obj.add_task(
-            'status maintain', self.status_maintain, 10000000, 1000)
+            'status maintain', self.status_maintain, 10000000, 100)
 
         self.task_obj.add_task('monitor status report',
                                self.status_report_monitor, 10000000, 1)
 
         self.task_obj.add_task(
-            'dev register', self.to_register_dev, 1, 1)
+            'dev register', self.to_register_dev, 1, 100)
 
         # self.task_obj.add_task(
         #    'check register', self.check_register_dev, 1, 10)
 
         self.task_obj.add_task(
-            'heartbeat', self.to_send_heartbeat, 1000000, 60000)
+            'heartbeat', self.to_send_heartbeat, 1000000, 6000)
 
     def msg_dispatch(self):
         msgs = []

@@ -32,7 +32,7 @@ from APIs.common_APIs import (my_system, my_system_full_output,
 from basic.cprint import cprint
 from basic.log_tool import MyLogger
 from basic.task import Task
-from protocol.zb_devices import Curtain, Led
+from protocol.zb_devices import *
 from protocol.zigbee_UART_protocol import ZIGBEE
 
 if sys.getdefaultencoding() != 'utf-8':
@@ -68,12 +68,12 @@ class ArgHandle():
             help='Specify serial port number',
         )
         parser.add_argument(
-            '-c', '--count',
-            dest='device_count',
+            '--device',
+            dest='device_type',
             action='store',
-            default=1,
-            type=int,
-            help='Specify how many devices to start, default is only 1',
+            choices={'led', 'curtain', 'switch'},
+            default='led',
+            help="Specify device type: 'led', 'curtain', 'switch'",
         )
         return parser
 
@@ -175,7 +175,7 @@ def sys_cleanup():
 
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.DEBUG,
+    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.INFO,
                    rlevel=logging.WARN)
     cprint = cprint(__name__)
 
@@ -193,9 +193,11 @@ if __name__ == '__main__':
     zigbee_obj = ZIGBEE('COM' + arg_handle.get_args('serial_port'),
                         logger=LOG, time_delay=arg_handle.get_args('time_delay'))
     zigbee_obj.run_forever()
-    for i in range(arg_handle.get_args('device_count')):
-        dev_LOG = MyLogger('dev_sim_%d.log' % (i), clevel=log_level)
-        zigbee_obj.add_device(Led)
+    device_type = arg_handle.get_args('device_type')
+    device_cls = chr(
+        ord(device_type.lower()[0]) - 32) + device_type.lower()[1:]
+    Sim = eval(device_cls)
+    zigbee_obj.set_device(Sim)
 
     sys_proc()
 

@@ -103,7 +103,7 @@ class BaseSim():
 
     def create_tasks(self):
         self.task_obj.add_task(
-            'status maintain', self.status_maintain, 10000000, 1000)
+            'status maintain', self.status_maintain, 10000000, 100)
 
         self.task_obj.add_task('monitor event report',
                                self.status_report_monitor, 10000000, 1)
@@ -133,7 +133,7 @@ class BaseSim():
             alarm_lock.acquire()
             for alarm in self.alarm_dict:
                 if self.alarm_dict[alarm]['status'] == 'ready':
-                    #self.alarm_dict[alarm]['status'] = 'start'
+                    self.alarm_dict[alarm]['status'] = "over"
                     self.send_msg(self.alarm_report(self.alarm_dict[alarm]['error_code'], self.alarm_dict[alarm]
                                                     ['error_status'], self.alarm_dict[alarm]['error_level'], self.alarm_dict[alarm]['error_msg']))
 
@@ -428,12 +428,12 @@ class Hanger(BaseSim):
                 if self._status == 'up':
                     self.task_obj.del_task('change_status_bottom')
                     self.task_obj.add_task(
-                        'change_status_top', self.set_item, 1, 10000, '_status', 'top')
+                        'change_status_top', self.set_item, 1, 1000, '_status', 'top')
 
                 elif self._status == 'down':
                     self.task_obj.del_task('change_status_top')
                     self.task_obj.add_task(
-                        'change_status_bottom', self.set_item, 1, 10000, '_status', 'bottom')
+                        'change_status_bottom', self.set_item, 1, 1000, '_status', 'bottom')
 
                 elif self._status == 'pause':
                     self.task_obj.del_task('change_status_top')
@@ -506,9 +506,9 @@ class Hanger(BaseSim):
             self.LOG.error('Msg wrong!')
 
 
-class WaterFilter(BaseSim):
+class Waterfilter(BaseSim):
     def __init__(self, logger, mac='123456', time_delay=500):
-        super(WaterFilter, self).__init__(logger)
+        super(Waterfilter, self).__init__(logger)
         self.LOG = logger
         self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,
                             mac=mac, deviceCategory='water_filter.main', self_addr=None)
@@ -521,38 +521,26 @@ class WaterFilter(BaseSim):
                 100
             ]
         }
-        self._status = 'filter'
+        self._status = 'standby'
         self._water_leakage = "off"
         self._water_shortage = "off"
-        self._filter_time_used = {
-            1: 101,
-            2: 202,
-        }
-        self._filter_time_remaining = {
-            1: 1899,
-            2: 1798,
-        }
+        self._filter_time_total = [
+            2000,
+            2000,
+        ]
+        self._filter_time_remaining = [
+            1000,
+            1000,
+        ]
 
     def reset_filter_time(self, id):
-        if int(id) in self._filter_time_used:
-            self._filter_time_used[int(id)] = 0
-            self._filter_time_remaining[int(id)] = 2000
+        if int(id) in self._filter_time_total:
+            self._filter_time_remaining[int(
+                id)] = self._filter_time_total[int(id)]
             return True
         else:
             self.LOG.error('Unknow ID: %s' % (id))
             return False
-
-    def get_filter_time_used(self):
-        filter_time_used_list = []
-        for id in sorted(self._filter_time_used):
-            filter_time_used_list.append(self._filter_time_used[id])
-        return filter_time_used_list
-
-    def get_filter_time_remaining(self):
-        filter_time_remaining_list = []
-        for id in sorted(self._filter_time_remaining):
-            filter_time_remaining_list.append(self._filter_time_remaining[id])
-        return filter_time_remaining_list
 
     def get_event_report(self):
         report_msg = {
@@ -560,10 +548,8 @@ class WaterFilter(BaseSim):
             "attribute": {
                 "filter_result": self._filter_result,
                 "status": self._status,
-                "water_leakage": self._water_leakage,
-                "water_shortage": self._water_shortage,
-                "filter_time_used": self.get_filter_time_used(),
-                "filter_time_remaining": self.get_filter_time_remaining()
+                "filter_time_total": self._filter_time_total,
+                "filter_time_remaining": self._filter_time_remaining
             }
         }
         return json.dumps(report_msg)
@@ -581,10 +567,8 @@ class WaterFilter(BaseSim):
                     "attribute": {
                         "filter_result": self._filter_result,
                         "status": self._status,
-                        "water_leakage": self._water_leakage,
-                        "water_shortage": self._water_shortage,
-                        "filter_time_used": self.get_filter_time_used(),
-                        "filter_time_remaining": self.get_filter_time_remaining()
+                        "filter_time_total": self._filter_time_total,
+                        "filter_time_remaining": self._filter_time_remaining
                     }
                 }
                 return json.dumps(rsp_msg)
@@ -597,7 +581,7 @@ class WaterFilter(BaseSim):
                     ("设置冲洗: %s" % (msg['params']["attribute"]["control"])).encode(coding))
                 self.set_item('_status', msg['params']["attribute"]["control"])
                 self.task_obj.add_task(
-                    'change WaterFilter to filter', self.set_item, 1, 30000, '_status', 'filter')
+                    'change WaterFilter to filter', self.set_item, 1, 100, '_status', 'standby')
                 return self.dm_set_rsp(msg['req_id'])
 
             elif msg['nodeid'] == u"water_filter.main.reset_filter":
@@ -605,7 +589,7 @@ class WaterFilter(BaseSim):
                     ("复位滤芯: %s" % (msg['params']["attribute"]["reset_filter"])).encode(coding))
                 filter_ids = msg['params']["attribute"]["reset_filter"]
                 if 0 in filter_ids:
-                    filter_ids = self.filter_time_used.keys()
+                    filter_ids = self._filter_time_total
                 for filter_id in filter_ids:
                     self.reset_filter_time(filter_id)
                 return self.dm_set_rsp(msg['req_id'])
@@ -977,7 +961,7 @@ class Oven(BaseSim):
                     '_reserve_bake', msg['params']["attribute"]["reserve_bake"])
                 self.task_obj.del_task('switch')
                 self.task_obj.add_task(
-                    'switch', self.set_item, 1, self._reserve_bake * 1000, '_switch', 'off')
+                    'switch', self.set_item, 1, self._reserve_bake * 100, '_switch', 'off')
                 return self.dm_set_rsp(msg['req_id'])
 
             elif msg['nodeid'] == u"wifi.main.alarm_confirm":

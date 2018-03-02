@@ -27,7 +27,6 @@ from APIs.common_APIs import bit_clear, bit_get, bit_set, protocol_data_printB
 from basic.log_tool import MyLogger
 from basic.task import Task
 from protocol.light_protocol import SDK
-from protocol.wifi_protocol import Wifi
 
 if sys.getdefaultencoding() != 'utf-8':
     reload(sys)
@@ -230,6 +229,10 @@ class Led(BaseSim):
                 b'\x00\x03': {
                     'cmd': b'\x01\x00\x03' + self.cmd[3:3 + 2],
                     'data': b'\x00' + b'\x21' + b'\x04' + self._Color_X + self._Color_Y,
+                },
+                'default': {
+                    'cmd': b'\x01\x00\x00\x00\x00',
+                    'data': b'\x00' + b'\x10' + b'\x01\x00',
                 },
             },
 
@@ -606,13 +609,13 @@ class Curtain(BaseSim):
                     self.set_item('switch', 1)
                     self.task_obj.del_task('close')
                     self.task_obj.add_task(
-                        'open', self.update_percent_lift, 100, 100, 'open')
+                        'open', self.update_percent_lift, 100, 10, 'open')
 
                 elif datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('switch', 0)
                     self.task_obj.del_task('open')
                     self.task_obj.add_task(
-                        'close', self.update_percent_lift, 100, 100, 'close')
+                        'close', self.update_percent_lift, 100, 10, 'close')
 
                 elif datas['cmd'][3:3 + 2] == b'\x02\x00':
                     self.set_item('switch', 2)
@@ -686,17 +689,17 @@ class Curtain(BaseSim):
 
 class Switch(BaseSim):
     def __init__(self, logger, mac=b'123456', short_id=b'\x11\x11', Endpoint=b'\x01'):
-        super(Led, self).__init__(logger=logger)
+        super(Switch, self).__init__(logger=logger)
         self.LOG = logger
         self.sdk_obj = None
         self.need_stop = False
 
         # state data:
-        self._Switch = b'\x00\x00'
+        self._Switch = b'\x08'
         self.Short_id = short_id
         self.Endpoint = Endpoint
         self.mac = str(mac) + b'\x00' * (8 - len(str(mac)))
-        self.Capability = b'\x05'
+        self.Capability = b'\x08'
         self.seq = b'\x01'
         self.cmd = b''
         self.addr = b''
@@ -721,23 +724,12 @@ class Switch(BaseSim):
             'Read attribute response': {
                 b'\x00\x00': {
                     'cmd': b'\x01\x00\x00\x04\x00',
-                    #'data': b'\x00' + b'\x42' + b'\x03' + 'PAK' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x16' + 'PAK_Dimmable_downlight',
-                    'data': b'\x00' + b'\x42' + b'\x03' + 'LDS' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'ZHA-ColorLight',
+                    'data': b'\x00' + b'\x42' + b'\x0a' + 'EverGrande' + b'\x05\x00' + b'\x00' + b'\x42' + b'\x0e' + 'BH-SZ103',
                 },
 
                 b'\x06\x00': {
                     'cmd': b'\x01\x06\x00\x00\x00',
-                    'data': b'\x00' + b'\x10' + b'\x01' + self._Switch[0:0 + 1],
-                },
-
-                b'\x08\x00': {
-                    'cmd': b'\x01\x08\x00\x00\x00',
-                    'data': b'\x00' + b'\x20' + b'\x01' + self._Level[0:0 + 1],
-                },
-
-                b'\x00\x03': {
-                    'cmd': b'\x01\x00\x03' + self.cmd[3:3 + 2],
-                    'data': b'\x00' + b'\x21' + b'\x04' + self._Color_X + self._Color_Y,
+                    'data': b'\x00' + b'\x10' + b'\x01' + b'\x00',
                 },
             },
 
@@ -749,21 +741,6 @@ class Switch(BaseSim):
             'Configure reporting response': {
                 b'\x06\x00': {
                     'cmd': b'\x07\x06\x00\x00\x00',
-                    'data': b'\x00\x00\x00\x00',
-                },
-
-                b'\x08\x00': {
-                    'cmd': b'\x07\x08\x00\x00\x00',
-                    'data': b'\x00\x00\x00\x00',
-                },
-
-                b'\x00\x03': {
-                    'cmd': b'\x07\x00\x03' + self.cmd[3:3 + 2],
-                    'data': b'\x00\x00\x00\x00',
-                },
-
-                'default': {
-                    'cmd': b'\x07\x00\x00\x00\x00',
                     'data': b'\x00\x00\x00\x00',
                 },
             },
@@ -808,7 +785,6 @@ class Switch(BaseSim):
             elif datas['cmd'][1:] == b'\x05\x00\x00\x00':
                 self.Endpoint = b'\x01'
                 rsp_data = self.get_cmd('Active Endpoint Response')
-                #self.set_item('Short_id', datas['data'])
                 if rsp_data:
                     rsp_datas['cmd'] = rsp_data['cmd']
                     rsp_datas['data'] = rsp_data['data']
@@ -838,46 +814,11 @@ class Switch(BaseSim):
 
         elif datas['cmd'][:1] == b'\x41':
             if datas['cmd'][1:1 + 2] == b'\x06\x00':
-                if datas['cmd'][3:3 + 2] == b'\x00\x00':
-                    self.set_item('_Switch', b'\x00')
-                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
+                if datas['cmd'][3:3 + 2] == b'\x01\x00':
                     self.set_item('_Switch', b'\x01')
-                else:
-                    self.set_item('_Switch', b'\x02')
 
-            elif datas['cmd'][1:1 + 2] == b'\x00\x03':
-                if datas['cmd'][3:3 + 2] == b'\x06\x00':
-                    self.set_item('_Hue', datas['data'][0:0 + 1])
-                    self.set_item('Saturation', datas['data'][1:1 + 1])
-
-                elif datas['cmd'][3:3 + 2] == b'\x07\x00':
-                    self.set_item('_Color_X', datas['data'][0:0 + 2])
-                    self.set_item('_Color_Y', datas['data'][2:2 + 2])
-
-                elif datas['cmd'][3:3 + 2] == b'\x0a\x00':
-                    self.set_item('_Color_Temperature', datas['data'][0:0 + 2])
-
-                else:
-                    self.LOG.error(protocol_data_printB(
-                        datas['cmd'][3:3 + 2], title='Unknow cmd:'))
-
-            elif datas['cmd'][1:1 + 2] == b'\x08\x00':
-                self.set_item('_Level', datas['data'][0:0 + 1])
-
-            elif datas['cmd'][1:1 + 2] == b'\x02\x01':
-                if datas['cmd'][3:3 + 2] == b'\x00\x00':
-                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
-
-                elif datas['cmd'][3:3 + 2] == b'\x01\x00':
-                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
-
-                elif datas['cmd'][3:3 + 2] == b'\x02\x00':
-                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
-
-                elif datas['cmd'][3:3 + 2] == b'\x05\x00':
-                    self.set_item('_Window_covering', datas['cmd'][3:3 + 2])
-                    self.set_item('Percentage_Lift_Value',
-                                  datas['data'][0:0 + 1])
+                elif datas['cmd'][3:3 + 2] == b'\x00\x00':
+                    self.set_item('_Switch', b'\x00')
 
                 else:
                     self.LOG.error(protocol_data_printB(
@@ -900,10 +841,6 @@ class Switch(BaseSim):
                     rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
                     rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
 
-                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
-                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
-                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
-
                 else:
                     self.LOG.error("Fuck Read attribute response")
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
@@ -920,15 +857,8 @@ class Switch(BaseSim):
                     rsp_datas['cmd'] = rsp_data[b'\x06\x00']['cmd']
                     rsp_datas['data'] = rsp_data[b'\x06\x00']['data']
 
-                elif datas['cmd'][1:1 + 2] == b'\x08\x00':
-                    rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
-                    rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
-
-                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
-                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
-                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
-
                 else:
+                    self.LOG.error("Fuck Configure reporting response")
                     rsp_datas['cmd'] = rsp_data['default']['cmd']
                     rsp_datas['data'] = rsp_data['default']['data']
 

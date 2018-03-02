@@ -42,6 +42,21 @@ class ArgHandle():
     def build_option_parser(self, description):
         parser = argparse.ArgumentParser(description=description)
         parser.add_argument(
+            '-p', '--server-port',
+            dest='server_port',
+            action='store',
+            default=5100,
+            type=int,
+            help='Specify TCP server port',
+        )
+        parser.add_argument(
+            '-i', '--server-IP',
+            dest='server_IP',
+            action='store',
+            default='192.168.10.1',
+            help='Specify TCP server IP address',
+        )
+        parser.add_argument(
             '-t', '--time-interval',
             dest='time_interval',
             action='store',
@@ -220,9 +235,9 @@ def debug(req_id, uuid, *args):
                 #"user_id": 2042,
                 "device_uuid": uuid,
                 "attribute": {
-                    "r": 88,
-                    "g": 88,
-                    "b": 88,
+                    "r": 255,
+                    "g": 0,
+                    "b": 0,
                     "transition_time": 10,
                     "need_confirm": 'false'
                 }
@@ -458,7 +473,8 @@ if __name__ == '__main__':
     global thread_list
     thread_list = []
 
-    app = AirControl(('192.168.10.1', 5100), logger=LOG)
+    app = AirControl((arg_handle.get_args('server_IP'),
+                      arg_handle.get_args('server_port')), logger=LOG)
     thread_list.append([app.schedule_loop])
     thread_list.append([app.send_data_loop])
     thread_list.append([app.recv_data_loop])
