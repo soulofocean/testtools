@@ -219,7 +219,9 @@ class MyClient:
 
         except Exception as e:
             self.LOG.warn("Connect to server failed[%s], wait 1s..." % (e))
-            sys.exit()
+            #TODO, these case should handle the socket.error 9 only, add more code here later...
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # add by zx for add->del->add WIFI sim
+            #sys.exit()
             return False
 
     def close(self):

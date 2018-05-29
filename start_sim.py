@@ -54,8 +54,8 @@ def hold_on():
 
 if __name__ =='__main__':
     start_sim()
-    os.system('python zb_dev_multiple.py')
-    # hold_on()
+    #os.system('python zb_dev_multiple.py')
+    hold_on()
 
 
 
