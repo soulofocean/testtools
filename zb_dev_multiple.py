@@ -64,7 +64,7 @@ class ArgHandle():
             '-p', '--port',
             dest='serial_port',
             action='store',
-            default='3',
+            default='5',
             help='Specify serial port number',
         )
         parser.add_argument(
@@ -193,13 +193,15 @@ if __name__ == '__main__':
     zigbee_obj = ZIGBEE('COM' + arg_handle.get_args('serial_port'),
                         logger=LOG, time_delay=arg_handle.get_args('time_delay'))
     zigbee_obj.run_forever()
-    device_type = arg_handle.get_args('device_type')
-    device_cls = chr(
-        ord(device_type.lower()[0]) - 32) + device_type.lower()[1:]
-    Sim = eval(device_cls)
-    zigbee_obj.set_device(Sim)
-
     sys_proc()
+    while True:
+        device_list=['Led','Curtain','Switch']
+        for device_cls in device_list:
+            Sim = eval(device_cls)
+            zigbee_obj.set_device(Sim)
+            time.sleep(30)
+
+
 
     if arg_handle.get_args('debug'):
         dmsg = b'\x55\xaa\x10\x27\x01\x11\x22\x33\x77\x88\x99\x11\x33\x55\x66\x22\x88\x11\x11'
