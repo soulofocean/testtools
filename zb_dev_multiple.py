@@ -58,7 +58,7 @@ class ArgHandle():
             action='store',
             default=0,
             type=int,
-            help='time delay(ms) for msg send to server, default time is 500(ms)',
+            help='time delay(ms) for msg send to server, default time is 0(ms)',
         )
         parser.add_argument(
             '-p', '--port',
@@ -71,9 +71,17 @@ class ArgHandle():
             '--device',
             dest='device_type',
             action='store',
-            choices={'led', 'curtain', 'switch'},
-            default='led',
-            help="Specify device type: 'led', 'curtain', 'switch'",
+            choices={'Led', 'Curtain', 'Switch'},
+            default=['Led', 'Curtain', 'Switch'],
+            #default='Led',
+            help="Specify device type: 'Led', 'Curtain', 'Switch'",
+        )
+        parser.add_argument(
+            '--interval',
+            dest='switch_interval',
+            action='store',
+            default=30,
+            help="Switch different device interval default is 30s",
         )
         return parser
 
@@ -194,14 +202,18 @@ if __name__ == '__main__':
                         logger=LOG, time_delay=arg_handle.get_args('time_delay'))
     zigbee_obj.run_forever()
     sys_proc()
-    while True:
-        device_list=['Led','Curtain','Switch']
-        for device_cls in device_list:
-            Sim = eval(device_cls)
-            zigbee_obj.set_device(Sim)
-            time.sleep(30)
-
-
+    device_list = arg_handle.get_args('device_type')  # ['Led','Curtain','Switch']
+    if isinstance(device_list, list):
+        while True:
+            for device_cls in device_list:
+                Sim = eval(device_cls)
+                zigbee_obj.set_device(Sim)
+                time.sleep(arg_handle.get_args('switch_interval'))
+    elif isinstance(device_list, str):
+        Sim = eval(device_list)
+        zigbee_obj.set_device(Sim)
+    else:
+        LOG.error("type of device_list is %s" % type(device_list))
 
     if arg_handle.get_args('debug'):
         dmsg = b'\x55\xaa\x10\x27\x01\x11\x22\x33\x77\x88\x99\x11\x33\x55\x66\x22\x88\x11\x11'
@@ -213,7 +225,6 @@ if __name__ == '__main__':
         #              frame: cprint.notice_p('Exit SYSTEM: exit'))
         my_cmd = MyCmd(logger=LOG, sim_objs=zigbee_obj.devices)
         my_cmd.cmdloop()
-
     else:
         sys_join()
         sys_cleanup()
