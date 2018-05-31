@@ -401,6 +401,10 @@ class Led(BaseSim):
                 elif datas['cmd'][1:1 + 2] == b'\x08\x00':
                     rsp_datas['cmd'] = rsp_data[b'\x08\x00']['cmd']
                     rsp_datas['data'] = rsp_data[b'\x08\x00']['data']
+                #add by -zx for cmd:00 00 03 03 00 and 00 00 03 04 00
+                elif datas['cmd'][1:1 + 2] == b'\x00\x03':
+                    rsp_datas['cmd'] = rsp_data[b'\x00\x03']['cmd']
+                    rsp_datas['data'] = rsp_data[b'\x00\x03']['data']
 
                 else:
                     self.LOG.error("Fuck Read attribute response")
