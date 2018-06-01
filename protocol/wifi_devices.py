@@ -228,11 +228,11 @@ class BaseSim():
 
 
 class Air(BaseSim):
-	def __init__(self, logger, mac='123456', time_delay=500):
+	def __init__(self, logger, mac='123456', time_delay=500, self_addr=None):
 		super(Air, self).__init__(logger)
 		self.LOG = logger
 		self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,
-							mac=mac, deviceCategory='airconditioner.new', self_addr=None)
+							mac=mac, deviceCategory='airconditioner.new', self_addr=self_addr)
 		self.sdk_obj.sim_obj = self
 
 		# state data:
@@ -370,11 +370,11 @@ class Air(BaseSim):
 
 
 class Hanger(BaseSim):
-	def __init__(self, logger, mac='123456', time_delay=500):
+	def __init__(self, logger, mac='123456', time_delay=500, self_addr=None):
 		super(Hanger, self).__init__(logger)
 		self.LOG = logger
 		self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,
-							mac=mac, deviceCategory='clothes_hanger.main', self_addr=None)
+							mac=mac, deviceCategory='clothes_hanger.main', self_addr=self_addr)
 		self.sdk_obj.sim_obj = self
 
 		# state data:
@@ -552,11 +552,11 @@ class Hanger(BaseSim):
 
 
 class Waterfilter(BaseSim):
-	def __init__(self, logger, mac='123456', time_delay=500):
+	def __init__(self, logger, mac='123456', time_delay=500, self_addr=None):
 		super(Waterfilter, self).__init__(logger)
 		self.LOG = logger
 		self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,
-							mac=mac, deviceCategory='water_filter.main', self_addr=None)
+							mac=mac, deviceCategory='water_filter.main', self_addr=self_addr)
 		self.sdk_obj.sim_obj = self
 
 		# state data:
@@ -657,11 +657,11 @@ class Waterfilter(BaseSim):
 
 
 class AirFilter(BaseSim):
-	def __init__(self, logger, mac='123456', time_delay=500):
+	def __init__(self, logger, mac='123456', time_delay=500, self_addr=None):
 		super(AirFilter, self).__init__(logger)
 		self.LOG = logger
 		self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,
-							mac=mac, deviceCategory='air_filter.main', self_addr=None)
+							mac=mac, deviceCategory='air_filter.main', self_addr=self_addr)
 		self.sdk_obj.sim_obj = self
 
 		# state data:
@@ -770,11 +770,11 @@ class AirFilter(BaseSim):
 
 
 class Washer(BaseSim):
-	def __init__(self, logger, mac='123456', time_delay=500):
+	def __init__(self, logger, mac='123456', time_delay=500, self_addr=None):
 		super(Washer, self).__init__(logger)
 		self.LOG = logger
 		self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,
-							mac=mac, deviceCategory='wash_machine.main', self_addr=None)
+							mac=mac, deviceCategory='wash_machine.main', self_addr=self_addr)
 		self.sdk_obj.sim_obj = self
 
 		# state data:
@@ -930,11 +930,11 @@ class Washer(BaseSim):
 
 
 class Oven(BaseSim):
-	def __init__(self, logger, mac='123456', time_delay=500):
+	def __init__(self, logger, mac='123456', time_delay=500, self_addr=None):
 		super(Oven, self).__init__(logger)
 		self.LOG = logger
 		self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,
-							mac=mac, deviceCategory='oven.main', self_addr=None)
+							mac=mac, deviceCategory='oven.main', self_addr=self_addr)
 		self.sdk_obj.sim_obj = self
 
 		# state data:
@@ -1040,11 +1040,11 @@ class Oven(BaseSim):
 
 
 class Repeater(BaseSim):
-	def __init__(self, logger, mac='123456', time_delay=500):
+	def __init__(self, logger, mac='123456', time_delay=500, self_addr=None):
 		super(Repeater, self).__init__(logger)
 		self.LOG = logger
 		self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,
-							mac=mac, deviceCategory='wifi_repeater.main', self_addr=None)
+							mac=mac, deviceCategory='wifi_repeater.main', self_addr=self_addr)
 		self.sdk_obj.sim_obj = self
 
 		# state data:
