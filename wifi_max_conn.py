@@ -14,7 +14,7 @@ from  os.path import join
 from basic.log_tool import MyLogger
 import os
 import time
-import socket
+import psutil
 sim_type = "Air"
 log_path = "wifi_mul_dev_log"
 device_online_list=[]
@@ -38,7 +38,61 @@ def hold_on():
 	while True:
 		time.sleep(100)
 
+def get_net_card_disp():
+	info = psutil.net_if_addrs()
+	for k,v in info.items():
+		print k
+		for vv in v:
+			print "\t" + str(vv)
+			for vvv in vv:
+				print "\t\t" + str(vvv)
+
+	info2 = psutil.net_if_stats()
+	for k,v in info2.items():
+		print k
+		for vv in v:
+			print "\t" + str(vv)
+
+def get_net_card_ipv4_addr():
+	card_info_dict = {}
+	card_info_dict["connected"] = {}
+	card_info_dict["dis_connected"] = {}
+	addr_info = psutil.net_if_addrs()
+	status_info = psutil.net_if_stats()
+	for k, v in addr_info.items():
+		mac = ''
+		for vv in v:
+			if(vv[0] == -1):
+				mac = vv[1]
+			#过滤掉非IPV4地址和LoopBack端口
+			if (vv[0] == 2 and vv[1] != '127.0.0.1'):
+				if(status_info[k][0]):
+					card_info_dict["connected"][k]= {
+						"ipv4" : vv[1],
+						"mac" : mac
+					}
+				else:
+					card_info_dict["dis_connected"][k] = {
+						"ipv4": vv[1],
+						"mac": mac
+					}
+	return card_info_dict
+
+def card_info_dict_disp(card_info_dict):
+	for k, v in card_info_dict.items():
+		print k
+		for vk, vv in v.items():
+			print "\t" + vk
+			for vvk, vvv in vv.items():
+				print "\t\t" + vvk
+				print "\t\t" + vvv
+
+def get_ipaddr
 
 if __name__ == '__main__':
-	start_sims()
-	hold_on()
+	#start_sims()
+	#hold_on()
+	#get_net_card_disp()
+	card_info_dict = get_net_card_ipv4_addr()
+	card_info_dict_disp(card_info_dict)
+	for v in card_info_dict["conn'"]

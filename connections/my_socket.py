@@ -208,19 +208,32 @@ class MyClient:
             # self.client.setblocking(False)
             #self.client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.client.bind(self.self_addr)
+            self.LOG.warn("Client bind %s" % str(self.self_addr))
             self.binded = True
 
         self.inputs = [self.client]
         try:
-            self.client.connect(self.addr)
-            self.LOG.info("Connection setup suceess!")
-            self.set_connected(True)
-            return True
-
+            code = self.client.connect_ex(self.addr)
+            if code == 0:
+                self.LOG.info("Connection setup suceess!")
+                self.set_connected(True)
+                return True
+            elif code ==10065:#一般是由于绑定的网卡不可用或者木有连接WIFI
+                self.LOG.error("Connect to server failed [code:%s] wait 10s..." % (code))
+                if self.binded and self.self_addr:
+                    self.LOG.error("May be client bind interface is down binded addr:%s" % str(self.self_addr))
+                time.sleep(10)
+                return False
+            else:#不知道神马情况，遇到再说，先睡一秒
+                self.LOG.warn("Connect to server failed other code[code:%s]" % (code))
+                time.sleep(1)
+                return False
         except Exception as e:
             self.LOG.warn("Connect to server failed[%s], wait 1s..." % (e))
             #TODO, these case should handle the socket.error 9 only, add more code here later...
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # add by zx for add->del->add WIFI sim
+            if(self.binded):#保证Socket绑定的网卡不变
+                self.binded = False
             #sys.exit()
             return False
 
