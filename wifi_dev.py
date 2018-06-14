@@ -201,18 +201,9 @@ if __name__ == '__main__':
         ord(device_type.lower()[0]) - 32) + device_type.lower()[1:]
     Sim = eval(device_cls)
 
-    #wifi_list = [('192.168.10.10',12345), ('192.168.10.13',12346), ('192.168.10.14',12347)]
-    wifi_list = [('192.168.10.12', 12347)]
-    mac_index = 0
-    for wk in wifi_list:
-        try:
-            mac_index += 1
-            newmac = arg_handle.get_args('mac')+str(mac_index)
-            LOG.warn("mac:"+newmac+" bind IP:"+str(wk))
-            sim = Sim(logger=LOG, time_delay=arg_handle.get_args('time_delay'), mac=newmac, self_addr=wk)
-            sim.run_forever()
-        except Exception as e:
-            LOG.error("bind rror:%s" % e)
+    sim = Sim(logger=LOG, time_delay=arg_handle.get_args(
+        'time_delay'), mac=arg_handle.get_args('mac'))
+    sim.run_forever()
 
     task_obj = Task('test-task', LOG)
     thread_list.append([task_obj.task_proc])
