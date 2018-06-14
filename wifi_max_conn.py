@@ -18,7 +18,7 @@ import psutil
 sim_type = "Air"
 log_path = "wifi_mul_dev_log"
 device_online_list=[]
-sim_num = 129
+sim_num = 128
 heartbeat_interval = 3
 def start_sims():
 	if not os.path.exists(log_path):
@@ -60,6 +60,9 @@ def get_net_card_ipv4_addr():
 	addr_info = psutil.net_if_addrs()
 	status_info = psutil.net_if_stats()
 	for k, v in addr_info.items():
+		#过滤掉虚拟机的网卡和本地有线网卡
+		if 'VMware' in k or 'HDLocal' in k:
+			continue
 		mac = ''
 		for vv in v:
 			if(vv[0] == -1):
@@ -87,7 +90,7 @@ def card_info_dict_disp(card_info_dict):
 				print "\t\t" + vvk
 				print "\t\t" + vvv
 
-def get_ipaddr
+
 
 if __name__ == '__main__':
 	#start_sims()
@@ -95,4 +98,3 @@ if __name__ == '__main__':
 	#get_net_card_disp()
 	card_info_dict = get_net_card_ipv4_addr()
 	card_info_dict_disp(card_info_dict)
-	for v in card_info_dict["conn'"]
