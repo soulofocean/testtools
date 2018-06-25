@@ -64,7 +64,7 @@ class ArgHandle():
             '-p', '--port',
             dest='serial_port',
             action='store',
-            default='3',
+            default='4',
             help='Specify serial port number',
         )
         parser.add_argument(
