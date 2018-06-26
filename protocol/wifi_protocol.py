@@ -234,4 +234,5 @@ class Wifi(communication_base):
 
 
 if __name__ == '__main__':
-    print(protocol_data_printB(msg, title='see see'))
+    #print(protocol_data_printB(msg, title='see see'))
+    pass
