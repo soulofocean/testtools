@@ -34,6 +34,13 @@ class AirCmd(Cmd):
     def emptyline(self):
         pass
 
+    def help_set(self):
+        cprint.notice_p("set state")
+
+    def do_set(self, arg, opts=None):
+        args = arg.split()
+        self.SimObj.set_item(args[0], args[1])
+
     def help_start(self):
         self.cprint.common_p("start simulator")
 
