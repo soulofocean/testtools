@@ -120,7 +120,7 @@ class Wifi(communication_base):
         resp_msg = '\x01'
         resp_msg += struct.pack('>B', struct.unpack('>B', msg[3])[0] + 1)
         #for AI Router 0.4.5 should resp_msg += msg[4:6]
-        resp_msg += msg[-2:]
+        resp_msg += msg[4:6]
         #self.LOG.debug(protocol_data_printB(resp_msg, title="code is:"))
         return resp_msg
 
