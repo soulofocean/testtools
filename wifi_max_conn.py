@@ -23,7 +23,14 @@ sim_num = 128#要启动的设备数
 start_port = 50000#预设的设备端口数
 bind_self = True
 force_dev_num = True
-show_net_card_only = True
+show_net_card = True
+# [disconnect_while_show,connect_while_show]
+# [True,False]:disconnect all wifi
+# [False,True]:connect all wifi
+disconnect_while_show = True
+disconnect_interval = 3
+connect_while_show = False
+connect_interval = 2
 ssid = "BeeBox_039696"
 wifi_file = "BeeBox_039696"
 #heartbeat_interval = 3
@@ -137,17 +144,31 @@ def connect_wifi():
 	for card in card_info_dict["connected"].keys():
 		print "Connecting:",card
 		connect_wifi_by_netsh(card)
+		time.sleep(connect_interval)
 	for card in card_info_dict["dis_connected"].keys():
 		print "Connecting:", card
 		connect_wifi_by_netsh(card)
+		time.sleep(connect_interval)
+
+def dis_connect_wifi():
+	card_info_dict = get_net_card_ipv4_addr()
+	for card in card_info_dict["connected"].keys():
+		print "Connecting:",card
+		disconnect_wifi_by_netsh(card)
+		time.sleep(disconnect_interval)
 
 if __name__ == '__main__':
-	if show_net_card_only:
+	if show_net_card:
 		card_info_dict = get_net_card_ipv4_addr()
 		card_info_dict_disp(card_info_dict)
-		connect_wifi()
-		time.sleep(5)
-		disconnect_wifi_by_netsh('RTL8192CU_1')
+		if disconnect_while_show:
+			dis_connect_wifi()
+		if connect_while_show:
+			connect_wifi()
+		card_info_dict = get_net_card_ipv4_addr()
+		card_info_dict_disp(card_info_dict)
+			#time.sleep(5)
+			#disconnect_wifi_by_netsh('RTL8192CU_1')
 	#for k,v in card_info_dict["connected"].items():
 	#	print k
 	#	for kk,vv in v.items():
