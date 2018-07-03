@@ -500,6 +500,8 @@ class Hanger(BaseSim):
 					("设置杀菌: %s" % (msg['params']["attribute"]["sterilization"])).encode(coding))
 				self.set_item('_sterilization',
 							  msg['params']["attribute"]["sterilization"])
+				self.set_item('_sterilization_remain',
+							  self._sterilization_duration)
 				return self.dm_set_rsp(msg['req_id'])
 
 			elif msg['nodeid'] == u"clothes_hanger.main.sterilization_duration":
@@ -515,6 +517,7 @@ class Hanger(BaseSim):
 				self.LOG.warn(
 					("设置烘干: %s" % (msg['params']["attribute"]["drying"])).encode(coding))
 				self.set_item('_drying', msg['params']["attribute"]["drying"])
+				self.set_item('_drying_remain', self._drying_duration)
 				if self._drying == 'on':
 					self.set_item('_air_drying', 'off')
 				return self.dm_set_rsp(msg['req_id'])
@@ -532,6 +535,7 @@ class Hanger(BaseSim):
 					("设置风干: %s" % (msg['params']["attribute"]["air_drying"])).encode(coding))
 				self.set_item(
 					'_air_drying', msg['params']["attribute"]["air_drying"])
+				self.set_item('_air_drying_remain', self._air_drying_duration)
 
 				if self._air_drying == 'on':
 					self.set_item('_drying', 'off')
