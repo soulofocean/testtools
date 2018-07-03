@@ -45,7 +45,7 @@ class AirCmd(BasicCmd):
             self.sim_obj.set_item("_mode", self.mode_kv[args[0]])
 
     def help_speed(self):
-        self.cprint.notice_p('set %s mode:mode %s' % (self.device_type, self.speed_kv))
+        self.cprint.notice_p('set %s speed:speed %s' % (self.device_type, self.speed_kv))
     def do_speed(self,arg):
         args = arg.split()
         if (len(args) != 1 or args[0] not in self.speed_kv):
