@@ -87,7 +87,7 @@ class BaseSim():
 		return self.sdk_obj.add_send_data(self.sdk_obj.msg_build(msg))
 
 	@abstractmethod
-	def protocol_handler(self, msg, ack=False):
+	def protocol_handler(self, msg):
 		pass
 
 	def stop(self):
@@ -588,6 +588,8 @@ class Waterfilter(BaseSim):
 			23
 		]
 		self._filter_status = "normal"
+		self._water_leakage = "off"
+		self._water_shortage = "off"
 
 	def reset_filter_time(self, id):
 		if int(id) in self._filter_time_total:
@@ -602,10 +604,13 @@ class Waterfilter(BaseSim):
 		report_msg = {
 			"method": "report",
 			"attribute": {
-				"filter_result": self._filter_result,
+				"water_filter_result": self._filter_result,
 				"status": self._status,
 				"filter_time_total": self._filter_time_total,
-				"filter_time_remaining": self._filter_time_remaining
+				"filter_time_remaining": self._filter_time_remaining,
+				"water_shortage": self._water_shortage,
+				"water_leakage": self._water_leakage,
+				"filter_lifetime": self._filter_lifetime
 			}
 		}
 		return json.dumps(report_msg)
@@ -621,12 +626,14 @@ class Waterfilter(BaseSim):
 					"msg": "success",
 					"code": 0,
 					"attribute": {
-						"filter_result": self._filter_result,
+						"water_filter_result": self._filter_result,
 						"status": self._status,
 						"filter_time_total": self._filter_time_total,
 						"filter_time_remaining": self._filter_time_remaining,
 						"filter_lifetime": self._filter_lifetime,
-						"filter_status": self._filter_status
+						"filter_status": self._filter_status,
+						"water_shortage": self._water_shortage,
+						"water_leakage": self._water_leakage,
 					}
 				}
 				return json.dumps(rsp_msg)
@@ -672,11 +679,9 @@ class AirFilter(BaseSim):
 		# state data:
 		self._air_filter_result = {
 			"air_quality": [
-				"low",
-				"high"
+				"good"
 			],
 			"PM25": [
-				500,
 				100
 			]
 		}
@@ -687,19 +692,25 @@ class AirFilter(BaseSim):
 		self._control_status = 'auto'
 		self._filter_time_used = '101'
 		self._filter_time_remaining = '1899'
+		self._temperature = "1888"
+		self._humidity = "5666"
+		self._replace_filter = "false"
 
 	def get_event_report(self):
 		report_msg = {
 			"method": "report",
 			"attribute": {
 				"air_filter_result": self._air_filter_result,
-				"switch_status": self._switch_status,
+				"switch": self._switch_status,
 				"child_lock_switch_status": self._child_lock_switch_status,
 				"negative_ion_switch_status": self._negative_ion_switch_status,
 				"speed": self._speed,
-				"control_status": self._control_status,
+				"control": self._control_status,
 				"filter_time_used": self._filter_time_used,
-				"filter_time_remaining": self._filter_time_remaining
+				"filter_time_remaining": self._filter_time_remaining,
+				"temperature": self._temperature,
+				"humidity": self._humidity,
+				"replace_filter": self._replace_filter
 			}
 		}
 		return json.dumps(report_msg)
@@ -716,13 +727,16 @@ class AirFilter(BaseSim):
 					"code": 0,
 					"attribute": {
 						"air_filter_result": self._air_filter_result,
-						"switch_status": self._switch_status,
+						"switch": self._switch_status,
 						"child_lock_switch_status": self._child_lock_switch_status,
 						"negative_ion_switch_status": self._negative_ion_switch_status,
 						"speed": self._speed,
-						"control_status": self._control_status,
+						"control": self._control_status,
 						"filter_time_used": self._filter_time_used,
-						"filter_time_remaining": self._filter_time_remaining
+						"filter_time_remaining": self._filter_time_remaining,
+						"temperature": self._temperature,
+						"humidity": self._humidity,
+						"replace_filter": self._replace_filter
 					}
 				}
 				return json.dumps(rsp_msg)
