@@ -21,7 +21,7 @@ class BasicCmd(Cmd):
         self.sim_obj = eval(d_type)(logger,mac=mac,addr=addr)
         self.prompt = "%s>>" % (d_type,)
         self.intro = "Welcome from %sCmd (Version:%s)!" % (d_type, version,)
-        self.do_log("3")
+        #self.do_log("3")
         self.do_start()
 
     def emptyline(self):
