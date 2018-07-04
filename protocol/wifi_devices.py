@@ -701,7 +701,7 @@ class AirFilter(BaseSim):
 			"method": "report",
 			"attribute": {
 				"air_filter_result": self._air_filter_result,
-				"switch": self._switch_status,
+				"switch_status": self._switch_status,
 				"child_lock_switch_status": self._child_lock_switch_status,
 				"negative_ion_switch_status": self._negative_ion_switch_status,
 				"speed": self._speed,
@@ -727,7 +727,7 @@ class AirFilter(BaseSim):
 					"code": 0,
 					"attribute": {
 						"air_filter_result": self._air_filter_result,
-						"switch": self._switch_status,
+						"switch_status": self._switch_status,
 						"child_lock_switch_status": self._child_lock_switch_status,
 						"negative_ion_switch_status": self._negative_ion_switch_status,
 						"speed": self._speed,
@@ -796,20 +796,20 @@ class Washer(BaseSim):
 		#self.sdk_obj.sim_obj = self
 
 		# state data:
-		self._status = 'standby'
-		self._auto_detergent_switch = 'off'
-		self._child_lock_switch_status = "off"
-		self._add_laundry_switch = "off"
-		self._sterilization = "off"
-		self._spin = 0
-		self._temperature = 28
-		self._reserve_wash = 24
-		self._mode = "mix"
-		self._time_left = 10
-		self._drying = "no_drying"
-		self._operation = "spin"
-		self._drying_duration = 15
-		self._switch = "on"
+		self._status = 'standby'#
+		self._auto_detergent_switch = 'off'##
+		self._child_lock_switch_status = "off"##
+		self._add_laundry_switch = "off"#
+		self._sterilization = "off"#
+		self._spin = 0#
+		self._temperature = 28#
+		self._reserve_wash = 24#
+		self._mode = "mix"#
+		self._time_left = 10#
+		self._drying = "no_drying"#
+		self._operation = "spin"#
+		self._drying_duration = 15#
+		self._switch = "on"#
 
 
 	def status_maintain(self):
@@ -949,29 +949,45 @@ class Washer(BaseSim):
 
 class Oven(BaseSim):
 	def __init__(self, logger, mac='123456', time_delay=500, self_addr=None, addr=('192.168.10.1', 65381)):
-		super(Oven, self).__init__(logger, addr=addr, mac=mac,time_delay=time_delay,self_addr=self_addr,deviceCategory='main.')
+		super(Oven, self).__init__(logger, addr=addr, mac=mac,time_delay=time_delay,self_addr=self_addr,deviceCategory='oven.main.')
 		#self.LOG = logger
 		#self.sdk_obj = Wifi(logger=logger, time_delay=time_delay,mac=mac, deviceCategory='oven.main', self_addr=self_addr)
 		#self.sdk_obj.sim_obj = self
 
 		# state data:
 		self._switch = 'off'
-		self._control = 'stop'
-		self._mode = 'convection'
+		self._status = 'stop'
+		self._mode = 'broil'
 		self._bake_duration = 99
+		self._convection = 'off'
+		self._rotisserie = 'off'
 		self._temperature = 230
 		self._reserve_bake = 1440
+		self._remaining = 0
+		self._step = 'bake'
+		self._light = 'off'
+		self._child_lock = 'off'
+		self._time = time.strftime("%H:%M")
+		self._preheat = 'off'
 
 	def get_event_report(self):
 		report_msg = {
 			"method": "report",
 			"attribute": {
 				"switch": self._switch,
-				"control": self._control,
+				"status": self._status,
 				"mode": self._mode,
 				"bake_duration": self._bake_duration,
+				"convection": self._convection,
+				"rotisserie": self._rotisserie,
 				"temperature": self._temperature,
 				"reserve_bake": self._reserve_bake,
+				"remaining": self._remaining,
+				"step": self._step,
+				"light": self._light,
+				"child_lock": self._child_lock,
+				"time": self._time,
+				"preheat": self._preheat
 			}
 		}
 		return json.dumps(report_msg)
@@ -988,11 +1004,19 @@ class Oven(BaseSim):
 					"code": 0,
 					"attribute": {
 						"switch": self._switch,
-						"control": self._control,
+						"status": self._status,
 						"mode": self._mode,
 						"bake_duration": self._bake_duration,
+						"convection": self._convection,
+						"rotisserie": self._rotisserie,
 						"temperature": self._temperature,
 						"reserve_bake": self._reserve_bake,
+						"remaining": self._remaining,
+						"step": self._step,
+						"light": self._light,
+						"child_lock": self._child_lock,
+						"time": self._time,
+						"preheat": self._preheat
 					}
 				}
 				return json.dumps(rsp_msg)
@@ -1029,6 +1053,20 @@ class Oven(BaseSim):
 					'_bake_duration', msg['params']["attribute"]["bake_duration"])
 				return self.dm_set_rsp(msg['req_id'])
 
+			elif msg['nodeid'] == u"oven.main.convection":
+				self.LOG.warn(
+					("设置热风对流: %s" % (msg['params']["attribute"]["convection"])).encode(coding))
+				self.set_item(
+					'_convection', msg['params']["attribute"]["convection"])
+				return self.dm_set_rsp(msg['req_id'])
+
+			elif msg['nodeid'] == u"oven.main.rotisserie":
+				self.LOG.warn(
+					("设置转叉: %s" % (msg['params']["attribute"]["rotisserie"])).encode(coding))
+				self.set_item(
+					'_rotisserie', msg['params']["attribute"]["rotisserie"])
+				return self.dm_set_rsp(msg['req_id'])
+
 			elif msg['nodeid'] == u"oven.main.temperature":
 				self.LOG.warn(
 					("设置温度: %s" % (msg['params']["attribute"]["temperature"])).encode(coding))
@@ -1046,11 +1084,68 @@ class Oven(BaseSim):
 					'switch', self.set_item, 1, self._reserve_bake * 100, '_switch', 'off')
 				return self.dm_set_rsp(msg['req_id'])
 
+			elif msg['nodeid'] == u"oven.main.light":
+				self.LOG.warn(
+					("设置照明灯: %s" % (msg['params']["attribute"]["light"])).encode(coding))
+				self.set_item(
+					'_light', msg['params']["attribute"]["light"])
+				return self.dm_set_rsp(msg['req_id'])
+
+			elif msg['nodeid'] == u"oven.main.child_lock":
+				self.LOG.warn(
+					("设置童锁: %s" % (msg['params']["attribute"]["child_lock"])).encode(coding))
+				self.set_item(
+					'_child_lock', msg['params']["attribute"]["child_lock"])
+				return self.dm_set_rsp(msg['req_id'])
+
+			elif msg['nodeid'] == u"oven.main.time":
+				self.LOG.warn(
+					("设置时间: %s" % (msg['params']["attribute"]["time"])).encode(coding))
+				self.set_item(
+					'_time', msg['params']["attribute"]["time"])
+				return self.dm_set_rsp(msg['req_id'])
+
+			elif msg['nodeid'] == u"oven.main.preheat":
+				self.LOG.warn(
+					("设置辅热: %s" % (msg['params']["attribute"]["preheat"])).encode(coding))
+				self.set_item(
+					'_preheat', msg['params']["attribute"]["preheat"])
+				return self.dm_set_rsp(msg['req_id'])
+
+			elif msg['nodeid'] == u"oven.main.custom":
+				self.LOG.warn(
+					("设置custom: %s" % (msg['params']["attribute"])).encode(coding))
+				self.set_item(
+					'_switch', msg['params']["attribute"]["switch"])
+				self.set_item(
+					'_status', msg['params']["attribute"]["control"])
+				self.set_item(
+					'_mode', msg['params']["attribute"]["mode"])
+				self.set_item(
+					'_bake_duration', msg['params']["attribute"]["bake_duration"])
+				self.set_item(
+					'_convection', msg['params']["attribute"]["convection"])
+				self.set_item(
+					'_rotisserie', msg['params']["attribute"]["rotisserie"])
+				self.set_item(
+					'_temperature', msg['params']["attribute"]["temperature"])
+				self.set_item(
+					'_reserve_bake', msg['params']["attribute"]["reserve_bake"])
+				self.set_item(
+					'_light', msg['params']["attribute"]["light"])
+				self.set_item(
+					'_child_lock', msg['params']["attribute"]["child_lock"])
+				self.set_item(
+					'_time', msg['params']["attribute"]["time"])
+				self.set_item(
+					'_preheat', msg['params']["attribute"]["preheat"])
+				return self.dm_set_rsp(msg['req_id'])
+
 			elif msg['nodeid'] == u"wifi.main.alarm_confirm":
 				return self.alarm_confirm_rsp(msg['req_id'], msg['params']["attribute"]["error_code"])
 
 			else:
-				self.LOG.warn('Unknow msg!')
+				self.LOG.warn('Unknow msg %s!' % (msg['nodeid'],))
 
 		else:
 			self.LOG.error('Msg wrong!')
