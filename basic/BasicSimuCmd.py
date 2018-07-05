@@ -9,6 +9,7 @@ import sys
 from cmd import Cmd
 from basic.cprint import cprint
 from protocol.wifi_devices import *
+from protocol.waterheater import WaterHeater
 
 # region const variates
 log_kv = [("0","logging.CRITICAL"),("1","logging.ERROR"),("2","logging.WARNING"),("3","logging.INFO"),("4","logging.DEBUG")]
