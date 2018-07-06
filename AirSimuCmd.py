@@ -21,7 +21,7 @@ class AirCmd(BasicCmd):
         self.air_version = "20180628"
         self.mac = str(hex(int(time.time())))[-8:]
         self.device_type = "Air"
-        BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version)
+        BasicCmd.__init__(self, logger=logger, cprint=cprint, version=self.air_version, d_type=self.device_type)
         self.sim_obj = eval(self.device_type)(logger, mac=self.mac, addr=rout_addr)
         self.do_start()
         self.onoff_kv = {"0": "off", "1": "on"}
