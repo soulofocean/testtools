@@ -97,9 +97,10 @@ class Waterfilter(BaseWifiSim):
                 "status": self._status,
                 "filter_time_total": self._filter_time_total,
                 "filter_time_remaining": self._filter_time_remaining,
+                "filter_lifetime": self._filter_lifetime,
+                "filter_status": self._filter_status,
                 "water_shortage": self._water_shortage,
-                "water_leakage": self._water_leakage,
-                "filter_lifetime": self._filter_lifetime
+                "water_leakage": self._water_leakage
             }
         }
         return json.dumps(report_msg)
@@ -122,7 +123,7 @@ class Waterfilter(BaseWifiSim):
                         "filter_lifetime": self._filter_lifetime,
                         "filter_status": self._filter_status,
                         "water_shortage": self._water_shortage,
-                        "water_leakage": self._water_leakage,
+                        "water_leakage": self._water_leakage
                     }
                 }
                 return json.dumps(rsp_msg)
