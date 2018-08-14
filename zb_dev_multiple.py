@@ -64,7 +64,7 @@ class ArgHandle():
             '-p', '--port',
             dest='serial_port',
             action='store',
-            default='4',
+            default='3',
             help='Specify serial port number',
         )
         parser.add_argument(
@@ -72,8 +72,8 @@ class ArgHandle():
             dest='device_type',
             action='store',
             choices={'Led', 'Curtain', 'Switch'},
-            default=['Led', 'Curtain', 'Switch'],
-            #default='Led',
+            #default=['Led', 'Curtain', 'Switch'],
+            default='Switch',
             help="Specify device type: 'Led', 'Curtain', 'Switch'",
         )
         parser.add_argument(
@@ -183,7 +183,7 @@ def sys_cleanup():
 
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.INFO,
+    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log').replace('exe','log'), clevel=logging.INFO,
                    rlevel=logging.WARN)
     cprint = cprint(__name__)
 
