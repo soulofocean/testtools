@@ -7,6 +7,7 @@ __mtime__ = '2018-5-25'
 """
 import sys
 import subprocess
+import binascii
 reload(sys)
 sys.setdefaultencoding("utf-8")
 from protocol.wifi_devices import Air
@@ -25,7 +26,7 @@ sim_type = "Air"#要启动的设备类型
 log_path = "wifi_mul_dev_log"#LOG文件存放的目录
 device_online_list=[]
 sim_num = 128#要启动的设备数
-start_port = cf.get('wifi','start_port')#预设的设备端口数
+start_port = 0 #cf.get('wifi','start_port')#预设的设备端口数
 bind_self = True
 force_dev_num = True
 show_net_card = eval(cf.get('wifi','show_net_card'))
@@ -43,17 +44,31 @@ mac_prefix = cf.get('wifi','mac_prefix')
 cl_level = cf.get('wifi','cl_level')
 fl_level = cf.get('wifi','fl_level')
 start_one_by_one = False
+del_log_before_start = True
 #heartbeat_interval = 3
+def del_all_files(path):
+	for ls in os.listdir(path):
+		sub_path = os.path.join(path,ls)
+		if os.path.isdir(sub_path):
+			del_all_files(sub_path)
+		else:
+			os.remove(sub_path)
+
 def start_sims():
 	if not os.path.exists(log_path):
 		os.mkdir(log_path)
+	if del_log_before_start:
+		del_all_files(log_path)
 	addr_len = 0
 	if bind_self:
 		addr_list = get_connected_ipv4_list()
 		addr_len = len(addr_list)
+	mac_mid = "Air"  # Ascii of "Air_"
+	mac_head = ("%s%s" % (mac_prefix[0:1], mac_mid))
 	for i in range(0, sim_num):
-		mac_tmp = mac_prefix + sim_type+"mac"+str(i)
-		log = MyLogger(join(log_path,'%s%s.log' % (sim_type, mac_tmp)),
+		#mac_tmp = mac_prefix + sim_type+"mac"+str(i)
+		mac_tmp = ("%s%02x" % (mac_head,i))
+		log = MyLogger(join(log_path,'%s-%s.log' % (sim_type, mac_tmp)),
 					   clevel=eval(cl_level), flevel=eval(fl_level))
 		log.warn("device mac:%s" % (mac_tmp,))
 		sim = eval(sim_type)
@@ -63,7 +78,7 @@ def start_sims():
 				break
 			addr_index = i % (addr_len)
 			sim_temp = sim(logger=log, mac=mac_tmp, addr=rout_addr,
-						   self_addr=(addr_list[addr_index], int(start_port) + i))
+						   self_addr=(addr_list[addr_index], int(start_port)))
 		else:
 			log.error("no any net card is connected!")
 			sys.exit(-666)

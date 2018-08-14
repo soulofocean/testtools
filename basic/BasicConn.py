@@ -191,7 +191,7 @@ class MyClient:
     def close(self):
         return self.client.close()
 
-    def recv_once(self, timeout=1):
+    def recv_once(self, timeout=None):
         try:
             if not self.get_connected():
                 return
