@@ -103,7 +103,7 @@ class BaseSim():
 		thread_list.append([self.sdk_obj.send_data_loop])
 		thread_list.append([self.sdk_obj.recv_data_loop])
 		thread_list.append([self.sdk_obj.heartbeat_loop, False])
-		thread_list.append([self.task_obj.task_proc])
+		#thread_list.append([self.task_obj.task_proc])
 		thread_list.append([self.alarm_proc])
 		thread_ids = []
 		for th in thread_list:
