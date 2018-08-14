@@ -184,7 +184,7 @@ def sys_cleanup():
 
 
 if __name__ == '__main__':
-    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.INFO,
+    LOG = MyLogger(os.path.abspath(sys.argv[0]).replace('py', 'log'), clevel=logging.DEBUG,
                    rlevel=logging.WARN)
     cprint = cprint(__name__)
 
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     sim.run_forever()
 
     task_obj = Task('test-task', LOG)
-    thread_list.append([task_obj.task_proc])
+    #thread_list.append([task_obj.task_proc])
     sys_proc()
 
     if arg_handle.get_args('debug'):
